@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 class BreakTrackerTabScreen extends StatefulWidget {
-  final String employeeName;
+  // final String employeeName;
 
-   BreakTrackerTabScreen({super.key, required this.employeeName});
+  BreakTrackerTabScreen({super.key,});
 
   @override
   State<BreakTrackerTabScreen> createState() => _BreakTrackerTabScreenState();
@@ -12,15 +12,19 @@ class BreakTrackerTabScreen extends StatefulWidget {
 class _BreakTrackerTabScreenState extends State<BreakTrackerTabScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  String employeeName = "Adnan";
+
+  // Current-day break total
   Duration totalBreakDuration = Duration.zero;
   DateTime? breakStartTime;
   String? currentBreakType;
 
+  // Map to store daily totals: Date (year,month,day) -> Duration
+  final Map<DateTime, Duration> _dailyBreaks = {};
+
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
   }
 
   @override
@@ -31,15 +35,26 @@ class _BreakTrackerTabScreenState extends State<BreakTrackerTabScreen>
 
   bool isWithinShift(DateTime time) {
     final now = time;
-    final start = DateTime(now.year, now.month, now.day, 19); // 7 PM
-    final end = DateTime(now.year, now.month, now.month, 4); // 4 AM
+    final shiftStart = DateTime(now.year, now.month, now.day, 19); // 7 PM
+    final shiftEnd = DateTime(now.year, now.month, now.day, 4);   // 4 AM next day
 
     if (now.hour < 4) {
-      return now.isBefore(end) ||
-          now.isAfter(start.subtract(const Duration(days: 1)));
+      // after midnight: still previous day's shift
+      return now.isBefore(shiftEnd) ||
+          now.isAfter(shiftStart.subtract(const Duration(days: 1)));
     } else {
-      return now.isAfter(start);
+      return now.isAfter(shiftStart);
     }
+  }
+
+  void _recordDailyTotal() {
+    final todayKey = DateTime(
+      DateTime.now().year,
+      DateTime.now().month,
+      DateTime.now().day,
+    );
+    // overwrite or set today's total
+    _dailyBreaks[todayKey] = totalBreakDuration;
   }
 
   void startBreak(String type) {
@@ -49,7 +64,6 @@ class _BreakTrackerTabScreenState extends State<BreakTrackerTabScreen>
       );
       return;
     }
-
     setState(() {
       currentBreakType = type;
       breakStartTime = DateTime.now();
@@ -58,13 +72,14 @@ class _BreakTrackerTabScreenState extends State<BreakTrackerTabScreen>
 
   void endBreak() {
     if (breakStartTime == null) return;
-
     final now = DateTime.now();
-    final breakDuration = now.difference(breakStartTime!);
+    final dur = now.difference(breakStartTime!);
 
     if (isWithinShift(breakStartTime!)) {
       setState(() {
-        totalBreakDuration += breakDuration;
+        totalBreakDuration += dur;
+        // update daily record immediately
+        _recordDailyTotal();
       });
     }
 
@@ -74,10 +89,21 @@ class _BreakTrackerTabScreenState extends State<BreakTrackerTabScreen>
     });
   }
 
-  String formatDuration(Duration duration) {
-    final minutes = duration.inMinutes % 60;
-    final hours = duration.inHours;
-    return '${hours.toString().padLeft(2, '0')}h ${minutes.toString().padLeft(2, '0')}m';
+  Duration getMonthlyTotal() {
+    final now = DateTime.now();
+    Duration sum = Duration.zero;
+    _dailyBreaks.forEach((date, dur) {
+      if (date.year == now.year && date.month == now.month) {
+        sum += dur;
+      }
+    });
+    return sum;
+  }
+
+  String formatDuration(Duration d) {
+    final h = d.inHours;
+    final m = d.inMinutes % 60;
+    return '${h.toString().padLeft(2,'0')}h ${m.toString().padLeft(2,'0')}m';
   }
 
   @override
@@ -85,24 +111,29 @@ class _BreakTrackerTabScreenState extends State<BreakTrackerTabScreen>
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        // title: const Text('Break Tracker'),
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
             Tab(text: "Employee"),
             Tab(text: "Quick Break"),
             Tab(text: "Meal Break"),
-            Tab(text: "Total"),
+            Tab(text: "Total Today"),
+            Tab(text: "Monthly"),
           ],
         ),
       ),
       body: TabBarView(
         controller: _tabController,
         children: [
+          // 1. Employee Info
           Center(
-            child: Text("👤 Employee: ${widget.employeeName}",
-                style: const TextStyle(fontSize: 22)),
+            child: Text(
+              "👤 Employee",
+              style: const TextStyle(fontSize: 22),
+            ),
           ),
+
+          // 2. Quick Break
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -121,11 +152,12 @@ class _BreakTrackerTabScreenState extends State<BreakTrackerTabScreen>
                   ),
                 ] else ...[
                   const Text("Another break is active"),
-                ]
+                ],
               ],
             ),
           ),
 
+          // 3. Meal Break
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -144,16 +176,27 @@ class _BreakTrackerTabScreenState extends State<BreakTrackerTabScreen>
                   ),
                 ] else ...[
                   const Text("Another break is active"),
-                ]
+                ],
               ],
             ),
           ),
 
-          /// ⏱ Total Break Time Tab
+          // 4. Total Today
           Center(
-            child: Text("🕓 Total Break Today:\n${formatDuration(totalBreakDuration)}",
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 20, color: Colors.blue)),
+            child: Text(
+              "🕓 Total Break Today:\n${formatDuration(totalBreakDuration)}",
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 20, color: Colors.blue),
+            ),
+          ),
+
+          // 5. Monthly Summary
+          Center(
+            child: Text(
+              "${DateTime.now().month}/${DateTime.now().year} Break Total:\n${formatDuration(getMonthlyTotal())}",
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 20, color: Colors.green),
+            ),
           ),
         ],
       ),

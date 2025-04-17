@@ -42,99 +42,102 @@ class _UserScreenState extends State<UserScreen>
     double w = MediaQuery.of(context).size.width;
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Welcome To BlueLinesTech")),
-      body: Center(
+      body: Padding(
+        padding: const EdgeInsets.all(8.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              "Select Your Type",
-              style: TextStyle(
-                fontSize: 24,
-                color: AppColors.appColor,
-                fontWeight: FontWeight.bold,
+            SizedBox(height: h*0.10,),
+            Text("Welcome to Our Company BlueLinesTech",maxLines: 1,style: TextStyle(fontSize: 18,fontWeight: FontWeight.bold),),
+            Center(
+              child: Text(
+                "Select Your Type",
+                style: TextStyle(
+                  fontSize: 24,
+                  color: AppColors.orangeShade,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
             SizedBox(height: h * .020),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                GestureDetector(
-                  onTapDown: (_) => _onTapDown(true),
-                  onTapUp: (_) => _onTapUp(true),
-                  onTapCancel: () => _onTapUp(true),
-                  onTap: () {},
-                  child: AnimatedScale(
-                    scale: _adminScale,
-                    duration: const Duration(milliseconds: 200),
-                    child: Container(
-                      height: h * 0.20,
-                      width: w * 0.4,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(14),
-                        color: AppColors.blackColor,
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.admin_panel_settings,
+            GestureDetector(
+              onTapDown: (_) => _onTapDown(true),
+              onTapUp: (_) => _onTapUp(true),
+              onTapCancel: () => _onTapUp(true),
+              onTap: () {},
+              child: AnimatedScale(
+                scale: _adminScale,
+                duration: const Duration(milliseconds: 200),
+                child: Center(
+                  child: Container(
+                    height: h * 0.20,
+                    width: w * 0.4,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      color: AppColors.blackColor,
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.admin_panel_settings,
+                          color: AppColors.whiteTheme,
+                          size: 80,
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          "Admin",
+                          style: TextStyle(
+                            fontSize: 20,
                             color: AppColors.whiteTheme,
-                            size: 80,
                           ),
-                          const SizedBox(height: 10),
-                          Text(
-                            "Admin",
-                            style: TextStyle(
-                              fontSize: 20,
-                              color: AppColors.whiteTheme,
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-                GestureDetector(
-                  onTapDown: (_) => _onTapDown(false),
-                  onTapUp: (_) => _onTapUp(false),
-                  onTapCancel: () => _onTapUp(false),
-                  onTap: () {
-                    Get.to(SignupScreen());
-                  },
-                  child: AnimatedScale(
-                    scale: _employeeScale,
-                    duration: const Duration(milliseconds: 200),
-                    child: Container(
-                      height: h * 0.20,
-                      width: w * 0.4,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(14),
-                        color: AppColors.blackColor,
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.person,
+              ),
+            ),
+            SizedBox(height: h*0.010,),
+            GestureDetector(
+              onTapDown: (_) => _onTapDown(false),
+              onTapUp: (_) => _onTapUp(false),
+              onTapCancel: () => _onTapUp(false),
+              onTap: () {
+                Get.to(SignupScreen());
+              },
+              child: AnimatedScale(
+                scale: _employeeScale,
+                duration: const Duration(milliseconds: 200),
+                child: Center(
+                  child: Container(
+                    height: h * 0.20,
+                    width: w * 0.4,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      color: AppColors.blackColor,
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.person,
+                          color: AppColors.whiteTheme,
+                          size: 80,
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          "Employee",
+                          style: TextStyle(
+                            fontSize: 20,
                             color: AppColors.whiteTheme,
-                            size: 80,
                           ),
-                          const SizedBox(height: 10),
-                          Text(
-                            "Employee",
-                            style: TextStyle(
-                              fontSize: 20,
-                              color: AppColors.whiteTheme,
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-              ],
+              ),
             ),
           ],
         ),
