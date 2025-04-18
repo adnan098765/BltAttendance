@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../BreakTracker/break_tracker_screen.dart';
 import '../Widgets/text_widget.dart';
 import '../AppColors/app_colors.dart';
+import 'custom_text_field.dart';
 
 
 class SignupScreen extends StatefulWidget {
@@ -49,369 +50,55 @@ class _SignupScreenState extends State<SignupScreen> {
                   color: AppColors.orangeShade,
                 ),
                 SizedBox(height: height * 0.025),
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
-                        spreadRadius: 1,
-                        blurRadius: 5,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: TextFormField(
-                    controller: fullNameController,
-                    keyboardType: TextInputType.text,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: Colors.grey[200],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide.none,
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(
-                          color: AppColors.orangeShade,
-                          width: 1.5,
-                        ),
-                      ),
-                      hintText: " Full Name",
-                      hintStyle: TextStyle(color: Colors.grey[600]),
-                      prefixIcon: Icon(Icons.person, color: Colors.grey[600]),
-                      contentPadding: EdgeInsets.symmetric(
-                        vertical: 15,
-                        horizontal: 15,
-                      ),
-                    ),
-                  ),
+                CustomTextField(
+                  controller: fullNameController,
+                  hintText: "Full Name",
+                  prefixIcon: Icons.person,
                 ),
                 SizedBox(height: height * 0.025),
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
-                        spreadRadius: 1,
-                        blurRadius: 5,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: TextFormField(
-                    controller: fatherNameController,
-                    keyboardType: TextInputType.text,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: Colors.grey[200],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide.none,
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(
-                          color: AppColors.orangeShade,
-                          width: 1.5,
-                        ),
-                      ),
-                      hintText: "Father Name",
-                      hintStyle: TextStyle(color: Colors.grey[600]),
-                      prefixIcon: Icon(Icons.person, color: Colors.grey[600]),
-                      contentPadding: EdgeInsets.symmetric(
-                        vertical: 15,
-                        horizontal: 15,
-                      ),
-                    ),
-                  ),
+                CustomTextField(
+                  controller: fatherNameController,
+                  hintText: "Father Name",
+                  prefixIcon: Icons.person,
                 ),
                 SizedBox(height: height * 0.025),
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
-                        spreadRadius: 1,
-                        blurRadius: 5,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: TextFormField(
-                    controller: phoneNumberController,
-                    keyboardType: TextInputType.text,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: Colors.grey[200],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide.none,
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(
-                          color: AppColors.orangeShade,
-                          width: 1.5,
-                        ),
-                      ),
-                      hintText: "Mobile Number",
-                      hintStyle: TextStyle(color: Colors.grey[600]),
-                      prefixIcon: Icon(Icons.phone, color: Colors.grey[600]),
-                      contentPadding: EdgeInsets.symmetric(
-                        vertical: 15,
-                        horizontal: 15,
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(height: height * 0.025),
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
-                        spreadRadius: 1,
-                        blurRadius: 5,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: TextFormField(
-                    controller: cnicController,
-                    keyboardType: TextInputType.text,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: Colors.grey[200],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide.none,
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(
-                          color: AppColors.orangeShade,
-                          width: 1.5,
-                        ),
-                      ),
-                      hintText: "CNIC",
-                      hintStyle: TextStyle(color: Colors.grey[600]),
-                      prefixIcon: Icon(Icons.perm_identity, color: Colors.grey[600]),
-                      contentPadding: EdgeInsets.symmetric(
-                        vertical: 15,
-                        horizontal: 15,
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(height: height * 0.025),
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
-                        spreadRadius: 1,
-                        blurRadius: 5,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: TextFormField(
-                    controller: mailNameController,
-                    keyboardType: TextInputType.text,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: Colors.grey[200],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide.none,
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(
-                          color: AppColors.orangeShade,
-                          width: 1.5,
-                        ),
-                      ),
-                      hintText: "Email",
-                      hintStyle: TextStyle(color: Colors.grey[600]),
-                      prefixIcon: Icon(Icons.mail, color: Colors.grey[600]),
-                      contentPadding: EdgeInsets.symmetric(
-                        vertical: 15,
-                        horizontal: 15,
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(height: height * 0.025),
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
-                        spreadRadius: 1,
-                        blurRadius: 5,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: TextFormField(
-                    controller: addressController,
-                    keyboardType: TextInputType.text,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: Colors.grey[200],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide.none,
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(
-                          color: AppColors.orangeShade,
-                          width: 1.5,
-                        ),
-                      ),
-                      hintText: "Address",
-                      hintStyle: TextStyle(color: Colors.grey[600]),
-                      prefixIcon: Icon(Icons.home, color: Colors.grey[600]),
-                      contentPadding: EdgeInsets.symmetric(
-                        vertical: 15,
-                        horizontal: 15,
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(height: height * 0.025),
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
-                        spreadRadius: 1,
-                        blurRadius: 5,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: TextFormField(
-                    controller: userNameController,
-                    keyboardType: TextInputType.text,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: Colors.grey[200],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide.none,
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(
-                          color: AppColors.orangeShade,
-                          width: 1.5,
-                        ),
-                      ),
-                      hintText: "Username",
-                      hintStyle: TextStyle(color: Colors.grey[600]),
-                      prefixIcon: Icon(Icons.person, color: Colors.grey[600]),
-                      contentPadding: EdgeInsets.symmetric(
-                        vertical: 15,
-                        horizontal: 15,
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(height: height * 0.025),
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
-                        spreadRadius: 1,
-                        blurRadius: 5,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: TextFormField(
-                    obscureText: true,
-
-                    controller: passwordController,
-                    keyboardType: TextInputType.text,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: Colors.grey[200],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide.none,
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(
-                          color: AppColors.orangeShade,
-                          width: 1.5,
-                        ),
-                      ),
-                      hintText: "Password",
-                      hintStyle: TextStyle(color: Colors.grey[600]),
-                      prefixIcon: Icon(Icons.password, color: Colors.grey[600]),
-                      contentPadding: EdgeInsets.symmetric(
-                        vertical: 15,
-                        horizontal: 15,
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(height: height * 0.025),
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
-                        spreadRadius: 1,
-                        blurRadius: 5,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: TextFormField(
-                    obscureText: true,
-                    controller: confirmPasswordController,
-                    keyboardType: TextInputType.text,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: Colors.grey[200],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide.none,
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(
-                          color: AppColors.orangeShade,
-                          width: 1.5,
-                        ),
-                      ),
-                      hintText: "Confirm Password",
-                      hintStyle: TextStyle(color: Colors.grey[600]),
-                      prefixIcon: Icon(Icons.password, color: Colors.grey[600]),
-                      contentPadding: EdgeInsets.symmetric(
-                        vertical: 15,
-                        horizontal: 15,
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(height: height * 0.025),
+                CustomTextField(
+                  controller: phoneNumberController,
+                  hintText: "Mobile Number",
+                  prefixIcon: Icons.phone,
+                ),                SizedBox(height: height * 0.025),
+                CustomTextField(
+                  controller: cnicController,
+                  hintText: "CNIC",
+                  prefixIcon: Icons.person_2_outlined,
+                ),                SizedBox(height: height * 0.025),
+                CustomTextField(
+                  controller: mailNameController,
+                  hintText: "Email",
+                  prefixIcon: Icons.mail,
+                ),                SizedBox(height: height * 0.025),
+                CustomTextField(
+                  controller: addressController,
+                  hintText: "Address",
+                  prefixIcon: Icons.home,
+                ),                SizedBox(height: height * 0.025),
+                CustomTextField(
+                  controller: userNameController,
+                  hintText: "Username",
+                  prefixIcon: Icons.person,
+                ),                SizedBox(height: height * 0.025),
+                CustomTextField(
+                  controller: passwordController,
+                  hintText: "Password",
+                  prefixIcon: Icons.lock,
+                  obscureText: true,
+                ),                SizedBox(height: height * 0.025),
+                CustomTextField(
+                  controller: confirmPasswordController,
+                  hintText: "Confirm Password",
+                  prefixIcon: Icons.lock,
+                  obscureText: true,
+                ),                SizedBox(height: height * 0.025),
                 Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(10),

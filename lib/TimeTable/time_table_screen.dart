@@ -171,9 +171,9 @@ class _TimetableScreenState extends State<TimetableScreen> {
                         final confirm = await showDialog<bool>(
                           context: context,
                           builder: (context) => AlertDialog(
-                            title: const Text('Delete Class'),
+                            title: const Text('Delete TimeTable'),
                             content: const Text(
-                                'Are you sure you want to delete this class?'),
+                                'Are you sure you want to delete this Timetable?'),
                             actions: [
                               TextButton(
                                 onPressed: () =>
@@ -268,25 +268,25 @@ class _AddEventDialogState extends State<AddEventDialog> {
                 value?.isEmpty ?? true ? 'Please enter break type' : null,
               ),
               const SizedBox(height: 16),
-              TextFormField(
-                controller: _teacherController,
-                decoration: const InputDecoration(
-                  labelText: 'Start Time',
-                  prefixIcon: Icon(Icons.free_breakfast),
-                ),
-                validator: (value) =>
-                value?.isEmpty ?? true ? 'Please enter start time' : null,
-              ),
+              // TextFormField(
+              //   controller: _teacherController,
+              //   decoration: const InputDecoration(
+              //     labelText: 'Start Time',
+              //     prefixIcon: Icon(Icons.free_breakfast),
+              //   ),
+              //   validator: (value) =>
+              //   value?.isEmpty ?? true ? 'Please enter start time' : null,
+              // ),
               const SizedBox(height: 16),
-              TextFormField(
-                controller: _roomController,
-                decoration: const InputDecoration(
-                  labelText: 'End Time',
-                  prefixIcon: Icon(Icons.room),
-                ),
-                validator: (value) =>
-                value?.isEmpty ?? true ? 'Please enter End time' : null,
-              ),
+              // TextFormField(
+              //   controller: _roomController,
+              //   decoration: const InputDecoration(
+              //     labelText: 'End Time',
+              //     prefixIcon: Icon(Icons.room),
+              //   ),
+              //   validator: (value) =>
+              //   value?.isEmpty ?? true ? 'Please enter End time' : null,
+              // ),
             ],
           ),
         ),

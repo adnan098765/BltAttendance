@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../AppColors/app_colors.dart';
 import '../Widgets/text_widget.dart';
@@ -28,17 +30,30 @@ class _LeaveScreenState extends State<LeaveScreen> {
 
   void _submitLeave() {
     if (_selectedLeaveType != null && _reasonController.text.isNotEmpty) {
-      // You can add database saving logic here
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$_selectedLeaveType submitted successfully!')),
+      Get.snackbar(
+        'Leave Submitted',
+        '$_selectedLeaveType submitted successfully!',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.green.shade400,
+        colorText: Colors.white,
+        borderRadius: 10,
+        margin: const EdgeInsets.all(12),
+        duration: const Duration(seconds: 2),
       );
       setState(() {
         _selectedLeaveType = null;
         _reasonController.clear();
       });
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a leave type and enter a reason.')),
+      Get.snackbar(
+        'Missing Information',
+        'Please select a leave type and enter a reason.',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.red.shade400,
+        colorText: Colors.white,
+        borderRadius: 10,
+        margin: const EdgeInsets.all(12),
+        duration: const Duration(seconds: 2),
       );
     }
   }
@@ -56,6 +71,10 @@ class _LeaveScreenState extends State<LeaveScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: AppColors.orangeShade,
+        leading: IconButton(onPressed: (){
+          Get.back();
+        }, icon: Icon(Icons.arrow_back_ios)),
         title: Text('Leave', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
       ),
       body: SingleChildScrollView(
@@ -178,16 +197,24 @@ class _LeaveScreenState extends State<LeaveScreen> {
 
   Widget _buildLeaveButton(String type) {
     final isSelected = _selectedLeaveType == type;
+    final isAnotherSelected = _selectedLeaveType != null && !isSelected;
+
     return ChoiceChip(
       label: Text(type),
       selected: isSelected,
       selectedColor: AppColors.orangeShade,
-      backgroundColor: Colors.grey[200],
+      backgroundColor: isAnotherSelected ? Colors.grey[300] : Colors.grey[200],
       labelStyle: GoogleFonts.poppins(
-        color: isSelected ? Colors.white : Colors.black87,
+        color: isSelected
+            ? Colors.white
+            : isAnotherSelected
+            ? Colors.grey
+            : Colors.black87,
         fontWeight: FontWeight.w500,
       ),
-      onSelected: (_) => _selectLeaveType(type),
+      onSelected: isAnotherSelected
+          ? null // disable tap when another leave is selected
+          : (_) => _selectLeaveType(type),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),

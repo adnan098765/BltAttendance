@@ -48,7 +48,6 @@ dependencies:
   table_calendar: ^3.2.0
   fl_chart: ^0.70.2
   shimmer: ^3.0.0
-  shared_preferences: ^2.2.2
 #  intl: ^0.20.1
 #  cupertino_icons: ^1.0.2
   provider: ^6.1.1
@@ -60,6 +59,8 @@ dependencies:
   file_picker: ^8.1.7
   url_launcher: ^6.2.1
   flutter_svg: ^2.0.17
+  shared_preferences: ^2.5.3
+  splash_master: ^0.0.2
 
 dev_dependencies:
   flutter_test:
@@ -84,10 +85,10 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-assets:
-  - assets/images/
-  - assets/sounds/start_sound.mp3
-  - assets/sounds/end_sound.mp3
+  assets:
+    - assets/images/
+    - assets/sounds/
+
 
 
   # An image asset can refer to one or more resolution-specific "variants", see

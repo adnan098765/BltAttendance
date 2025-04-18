@@ -1,3 +1,4 @@
+import 'package:attendance/Auth/login_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:attendance/AppColors/app_colors.dart';
@@ -176,7 +177,7 @@ class ChangePasswordScreen extends StatelessWidget {
                         onTap: () {
                           if (_formKey.currentState!.validate()) {
                             // Password change logic here
-                            Get.back();
+                            Get.to(LoginScreen());
                           }
                         },
                         child: AnimatedContainer(

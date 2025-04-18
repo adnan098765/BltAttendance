@@ -7,6 +7,7 @@ import '../BottonNavScreen/bottom_nav_screen.dart';
 import '../BreakTracker/break_tracker_screen.dart';
 import '../Widgets/text_widget.dart';
 import '../AppColors/app_colors.dart';
+import 'custom_text_field.dart';
 
 
 class LoginScreen extends StatefulWidget {
@@ -17,7 +18,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController emailController = TextEditingController();
+  final TextEditingController userController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
 
@@ -43,87 +44,17 @@ class _LoginScreenState extends State<LoginScreen> {
                   color: AppColors.orangeShade,
                 ),
                 SizedBox(height: height * 0.025),
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
-                        spreadRadius: 1,
-                        blurRadius: 5,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: TextFormField(
-                    controller: emailController,
-                    keyboardType: TextInputType.text,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: Colors.grey[200],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide.none,
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(
-                          color: AppColors.orangeShade,
-                          width: 1.5,
-                        ),
-                      ),
-                      hintText: "Username",
-                      hintStyle: TextStyle(color: Colors.grey[600]),
-                      prefixIcon: Icon(Icons.person, color: Colors.grey[600]),
-                      contentPadding: EdgeInsets.symmetric(
-                        vertical: 15,
-                        horizontal: 15,
-                      ),
-                    ),
-                  ),
+                CustomTextField(
+                  controller: userController,
+                  hintText: "Username",
+                  prefixIcon: Icons.person,
                 ),
                 SizedBox(height: height * 0.025),
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
-                        spreadRadius: 1,
-                        blurRadius: 5,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: TextFormField(
-                    controller: passwordController,
-                    obscureText: true,
-                    obscuringCharacter: "*",
-                    keyboardType: TextInputType.text,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: Colors.grey[200],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide.none,
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(
-                          color: AppColors.orangeShade,
-                          width: 1.5,
-                        ),
-                      ),
-                      hintText: "Password",
-                      hintStyle: TextStyle(color: Colors.grey[600]),
-                      prefixIcon: Icon(Icons.lock, color: Colors.grey[600]), // You can change icon to lock
-                      contentPadding: EdgeInsets.symmetric(
-                        vertical: 15,
-                        horizontal: 15,
-                      ),
-                    ),
-                  )
-
+                CustomTextField(
+                  controller: passwordController,
+                  hintText: "Password",
+                  prefixIcon: Icons.lock,
+                  obscureText: true,
                 ),
                 SizedBox(height: height * 0.025),
                 MouseRegion(

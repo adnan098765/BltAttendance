@@ -1,4 +1,8 @@
+import 'package:attendance/Employee/employees_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
+import '../Attendance/attendance_screen.dart';
 
 
 class HomeScreen extends StatelessWidget {
@@ -32,25 +36,22 @@ class HomeScreen extends StatelessWidget {
                       'Employees',
                       Icons.people,
                       Colors.blue,
-                      //     () => Navigator.push(
-                      //   context,
-                      //   MaterialPageRoute(
-                      //     builder: (context) =>
-                      //         StudentListScreen(),
-                      //   ),
-                      // ),
+                          () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              EmployeeAttendanceScreen(),
+                        ),
+                      ),
                     ),
                     _buildMenuCard(
                       context,
                       'Attendance',
                       Icons.calendar_today,
                       Colors.orange,
-                      //     () => Navigator.push(
-                      //   context,
-                      //   MaterialPageRoute(
-                      //     builder: (context) => const AttendanceScreen(),
-                      //   ),
-                      // ),
+                        (){
+                        Get.to(AttendanceScreen());
+                        }
                     ),
                     // _buildMenuCard(
                     //   context,
@@ -79,7 +80,7 @@ class HomeScreen extends StatelessWidget {
       String title,
       IconData icon,
       Color color,
-      // VoidCallback onTap,
+      VoidCallback onTap,
       ) {
     return Card(
       elevation: 4,
@@ -87,7 +88,7 @@ class HomeScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
       ),
       child: InkWell(
-        // onTap: onTap,
+        onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
