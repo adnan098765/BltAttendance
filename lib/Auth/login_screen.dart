@@ -7,7 +7,7 @@ import '../BottonNavScreen/bottom_nav_screen.dart';
 import '../BreakTracker/break_tracker_screen.dart';
 import '../Widgets/text_widget.dart';
 import '../AppColors/app_colors.dart';
-import 'custom_text_field.dart';
+import '../Widgets/custom_text_field.dart';
 
 
 class LoginScreen extends StatefulWidget {

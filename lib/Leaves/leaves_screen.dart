@@ -1,7 +1,10 @@
+import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../AppColors/app_colors.dart';
 import '../Widgets/text_widget.dart';
 
@@ -15,209 +18,233 @@ class LeaveScreen extends StatefulWidget {
 class _LeaveScreenState extends State<LeaveScreen> {
   String? _selectedLeaveType;
   final TextEditingController _reasonController = TextEditingController();
-  bool _buttonPressed = false;
+  final List<Map<String, String>> _submittedLeaves = [];
+  final Map<String, Timer> _cancelTimers = {};
 
-  void _selectLeaveType(String type) {
-    setState(() {
-      if (_selectedLeaveType == type) {
-        _selectedLeaveType = null; // Unselect if clicked again
-      } else {
-        _selectedLeaveType = type;
-      }
-      _reasonController.clear();
-    });
+  final List<String> _leaveOptions = [
+    'Half Leave',
+    'Emergency Leave',
+    'Long Leave',
+    'Sick Leave',
+    'Personal Leave',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSubmittedLeaves();
   }
 
-  void _submitLeave() {
+  Future<void> _loadSubmittedLeaves() async {
+    final prefs = await SharedPreferences.getInstance();
+    final leavesString = prefs.getString('leaves');
+    if (leavesString != null) {
+      final decoded = jsonDecode(leavesString) as List;
+      for (var e in decoded) {
+        final leave = Map<String, String>.from(e);
+        final timestamp = DateTime.parse(leave['timestamp']!);
+        final difference = DateTime.now().difference(timestamp).inMinutes;
+        _submittedLeaves.add(leave);
+
+        if (difference < 60) {
+          final remaining = Duration(minutes: 60 - difference);
+          _cancelTimers[leave['timestamp']!] = Timer(remaining, () {
+            setState(() {
+              _cancelTimers.remove(leave['timestamp']);
+            });
+          });
+        }
+      }
+      setState(() {});
+    }
+  }
+
+  Future<void> _saveSubmittedLeaves() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('leaves', jsonEncode(_submittedLeaves));
+  }
+
+  void _submitLeave() async {
     if (_selectedLeaveType != null && _reasonController.text.isNotEmpty) {
-      Get.snackbar(
-        'Leave Submitted',
-        '$_selectedLeaveType submitted successfully!',
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.green.shade400,
-        colorText: Colors.white,
-        borderRadius: 10,
-        margin: const EdgeInsets.all(12),
-        duration: const Duration(seconds: 2),
-      );
+      final newLeave = {
+        'type': _selectedLeaveType!,
+        'reason': _reasonController.text.trim(),
+        'timestamp': DateTime.now().toIso8601String(),
+      };
       setState(() {
+        _submittedLeaves.add(newLeave);
         _selectedLeaveType = null;
         _reasonController.clear();
       });
+      await _saveSubmittedLeaves();
+      _startCancelTimer(newLeave);
+
+      Get.snackbar('Leave Submitted', 'Your leave has been recorded successfully!',
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: Colors.green.shade400,
+          colorText: Colors.white);
     } else {
-      Get.snackbar(
-        'Missing Information',
-        'Please select a leave type and enter a reason.',
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red.shade400,
-        colorText: Colors.white,
-        borderRadius: 10,
-        margin: const EdgeInsets.all(12),
-        duration: const Duration(seconds: 2),
-      );
+      Get.snackbar('Missing Info', 'Please select leave type and enter reason.',
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: Colors.red.shade400,
+          colorText: Colors.white);
     }
+  }
+
+  void _startCancelTimer(Map<String, String> leave) {
+    final id = leave['timestamp']!;
+    _cancelTimers[id] = Timer(Duration(minutes: 60), () {
+      setState(() {
+        _cancelTimers.remove(id);
+      });
+    });
+  }
+
+  void _cancelLeave(String timestamp) async {
+    setState(() {
+      _submittedLeaves.removeWhere((leave) => leave['timestamp'] == timestamp);
+      _cancelTimers[timestamp]?.cancel();
+      _cancelTimers.remove(timestamp);
+    });
+    await _saveSubmittedLeaves();
+    Get.snackbar('Leave Cancelled', 'Your leave has been cancelled.',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.orange.shade400,
+        colorText: Colors.white);
   }
 
   @override
   void dispose() {
     _reasonController.dispose();
+    _cancelTimers.values.forEach((timer) => timer.cancel());
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    double height = MediaQuery.of(context).size.height;
     double width = MediaQuery.of(context).size.width;
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: AppColors.orangeShade,
-        leading: IconButton(onPressed: (){
-          Get.back();
-        }, icon: Icon(Icons.arrow_back_ios)),
+        backgroundColor: AppColors.appColor,
+        leading: IconButton(
+          onPressed: () => Get.back(),
+          icon: const Icon(Icons.arrow_back_ios),
+        ),
         title: Text('Leave', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
       ),
       body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Select Leave Type:',
-                  style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600)),
-              const SizedBox(height: 16),
-              Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                children: [
-                  _buildLeaveButton('Half Leave'),
-                  _buildLeaveButton('Emergency Leave'),
-                  _buildLeaveButton('Long Leave'),
-                  _buildLeaveButton('Sick Leave'),
-                  _buildLeaveButton('Personal Leave'),
-                ],
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Dropdown
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                color: Colors.grey[200],
               ),
-              const SizedBox(height: 24),
-              if (_selectedLeaveType != null) ...[
-                Text(
-                  'Reason for $_selectedLeaveType:',
-                  style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  decoration: BoxDecoration(
+              child: DropdownButton<String>(
+                isExpanded: true,
+                hint: Text('Select Leave Type', style: GoogleFonts.poppins(fontSize: 16)),
+                value: _selectedLeaveType,
+                items: _leaveOptions.map((type) {
+                  return DropdownMenuItem<String>(
+                    value: type,
+                    child: Text(type, style: GoogleFonts.poppins()),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedLeaveType = value;
+                  });
+                },
+                underline: const SizedBox(),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            if (_selectedLeaveType != null) ...[
+              Text('Reason for $_selectedLeaveType:', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+              const SizedBox(height: 10),
+              TextFormField(
+                controller: _reasonController,
+                decoration: InputDecoration(
+                  labelText: 'Enter your reason',
+                  filled: true,
+                  fillColor: Colors.grey[200],
+                  border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
-                        spreadRadius: 1,
-                        blurRadius: 5,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+                    borderSide: BorderSide.none,
                   ),
-                  child: TextField(
-                    controller: _reasonController,
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: Colors.grey[200],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide.none,
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(
-                          color: AppColors.orangeShade,
-                          width: 1.5,
-                        ),
-                      ),
-                      hintText: 'Enter your reason...',
-                      hintStyle: TextStyle(color: Colors.grey[600]),
-                      contentPadding: const EdgeInsets.symmetric(
-                        vertical: 15,
-                        horizontal: 15,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+                maxLines: 3,
+              ),
+              const SizedBox(height: 20),
+              Center(
+                child: GestureDetector(
+                  onTap: _submitLeave,
+                  child: Container(
+                    height: 50,
+                    width: width * 0.9,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(15),
+                      gradient: LinearGradient(
+                        colors: [AppColors.orangeShade, AppColors.orangeShade],
                       ),
                     ),
-                    maxLines: 4,
-                  ),
-                ),
-                const SizedBox(height: 30),
-                Center(
-                  child: MouseRegion(
-                    cursor: SystemMouseCursors.click,
-                    child: GestureDetector(
-                      onTapDown: (_) => setState(() => _buttonPressed = true),
-                      onTapUp: (_) => setState(() => _buttonPressed = false),
-                      onTapCancel: () => setState(() => _buttonPressed = false),
-                      onTap: _submitLeave,
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 100),
-                        height: height * 0.06,
-                        width: width * 0.9,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(15),
-                          boxShadow: _buttonPressed
-                              ? []
-                              : [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
-                              blurRadius: 10,
-                              offset: const Offset(0, 5),
-                            ),
-                          ],
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              AppColors.orangeShade,
-                              AppColors.orangeShade,
-                            ],
-                          ),
-                        ),
-                        child: Center(
-                          child: CustomText(
-                            text: "Submit Leave",
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.whiteTheme,
-                          ),
-                        ),
+                    child: Center(
+                      child: CustomText(
+                        text: "Submit Leave",
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.whiteTheme,
                       ),
                     ),
                   ),
                 ),
-              ],
+              ),
+              const SizedBox(height: 20),
             ],
-          ),
+
+            if (_submittedLeaves.isNotEmpty)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Submitted Leaves:',
+                      style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 10),
+                  ..._submittedLeaves.reversed.map((leave) {
+                    final timestamp = leave['timestamp'] ?? '';
+                    final canCancel = _cancelTimers.containsKey(timestamp);
+                    return Card(
+                      color: AppColors.orangeShade,
+                      margin: const EdgeInsets.symmetric(vertical: 6),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      elevation: 6,
+                      child: ListTile(
+                        title: Text(leave['type'] ?? ''),
+                        subtitle: Text(leave['reason'] ?? '',
+                            style: TextStyle(color: AppColors.whiteTheme)),
+                        trailing: canCancel
+                            ? TextButton(
+                          onPressed: () => _cancelLeave(timestamp),
+                          child: Text('Cancel leave',
+                              style: TextStyle(
+                                  color: AppColors.appColor,
+                                  fontWeight: FontWeight.bold)),
+                        )
+                            : null,
+                      ),
+                    );
+                  }),
+                ],
+              )
+          ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildLeaveButton(String type) {
-    final isSelected = _selectedLeaveType == type;
-    final isAnotherSelected = _selectedLeaveType != null && !isSelected;
-
-    return ChoiceChip(
-      label: Text(type),
-      selected: isSelected,
-      selectedColor: AppColors.orangeShade,
-      backgroundColor: isAnotherSelected ? Colors.grey[300] : Colors.grey[200],
-      labelStyle: GoogleFonts.poppins(
-        color: isSelected
-            ? Colors.white
-            : isAnotherSelected
-            ? Colors.grey
-            : Colors.black87,
-        fontWeight: FontWeight.w500,
-      ),
-      onSelected: isAnotherSelected
-          ? null // disable tap when another leave is selected
-          : (_) => _selectLeaveType(type),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
       ),
     );
   }

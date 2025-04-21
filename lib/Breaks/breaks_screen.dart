@@ -1,545 +1,400 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:audioplayers/audioplayers.dart';
-import 'package:intl/intl.dart';
+import 'package:get/get.dart';
+import '../AppColors/app_colors.dart';
 
-class BreaksScreen extends StatefulWidget {
-  const BreaksScreen({super.key});
+class BreakTrackerScreen extends StatefulWidget {
+  const BreakTrackerScreen({super.key});
 
   @override
-  State<BreaksScreen> createState() => _BreaksScreenState();
+  _BreakTrackerScreenState createState() => _BreakTrackerScreenState();
 }
 
-class _BreaksScreenState extends State<BreaksScreen> {
-  Timer? quickBreakTimer;
-  Timer? mealBreakTimer;
-  Timer? autoSaveTimer; // Timer for periodic auto-saving
+class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
+  bool isQuickBreak = false;
+  bool isMealBreak = false;
+  DateTime? quickBreakStart;
+  DateTime? mealBreakStart;
+  List<Map<String, dynamic>> breakRecords = [];
+  String selectedBreakType = 'Quick Break';
 
-  int quickBreakSeconds = 0;
-  int mealBreakSeconds = 0;
-
-  int dailyBreakMinutes = 0;
-  int monthlyBreakMinutes = 0;
-
-  bool isQuickBreakActive = false;
-  bool isMealBreakActive = false;
-
-  final AudioPlayer _audioPlayer = AudioPlayer();
-
-  // Use local assets instead of URLs
-  final String startSoundAsset = 'assets/sounds/ringtune.mpeg';
-  final String endSoundAsset = 'assets/sounds/ringtune.mpeg';
-
-  // SharedPreferences keys
-  static const String keyDailyBreakMinutes = "daily_break_minutes";
-  static const String keyMonthlyBreakMinutes = "monthly_break_minutes";
-  static const String keyLastBreakDate = "last_break_date";
-  static const String keyQuickBreakSeconds = "quick_break_seconds";
-  static const String keyMealBreakSeconds = "meal_break_seconds";
-  static const String keyQuickBreakActive = "quick_break_active";
-  static const String keyMealBreakActive = "meal_break_active";
+  Timer? _quickTimer;
+  Timer? _mealTimer;
+  int quickElapsedSeconds = 0;
+  int mealElapsedSeconds = 0;
 
   @override
   void initState() {
     super.initState();
-    loadAllData();
-
-    // Set up auto-save timer to save data every 30 seconds
-    autoSaveTimer = Timer.periodic(Duration(seconds: 30), (timer) {
-      saveAllData();
-    });
+    loadBreakRecords();
+    loadBreakStatus();
   }
 
-  Future<void> loadAllData() async {
-    await loadBreakData();
-    await loadBreakTimers();
-    checkDateForReset();
-  }
-
-  Future<void> loadBreakData() async {
-    try {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
+  void loadBreakRecords() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? data = prefs.getString('breakRecords');
+    if (data != null) {
       setState(() {
-        dailyBreakMinutes = prefs.getInt(keyDailyBreakMinutes) ?? 0;
-        monthlyBreakMinutes = prefs.getInt(keyMonthlyBreakMinutes) ?? 0;
+        breakRecords = List<Map<String, dynamic>>.from(jsonDecode(data));
       });
-    } catch (e) {
-      debugPrint("Error loading break data: $e");
-      // Use default values if loading fails
-      dailyBreakMinutes = 0;
-      monthlyBreakMinutes = 0;
     }
   }
 
-  Future<void> loadBreakTimers() async {
-    try {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
+  void saveBreakRecords() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('breakRecords', jsonEncode(breakRecords));
+  }
 
-      // Load break timers state
-      quickBreakSeconds = prefs.getInt(keyQuickBreakSeconds) ?? 0;
-      mealBreakSeconds = prefs.getInt(keyMealBreakSeconds) ?? 0;
+  void saveBreakStatus() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isQuickBreak', isQuickBreak);
+    await prefs.setBool('isMealBreak', isMealBreak);
+    await prefs.setInt('quickElapsedSeconds', quickElapsedSeconds);
+    await prefs.setInt('mealElapsedSeconds', mealElapsedSeconds);
 
-      bool wasQuickBreakActive = prefs.getBool(keyQuickBreakActive) ?? false;
-      bool wasMealBreakActive = prefs.getBool(keyMealBreakActive) ?? false;
+    if (quickBreakStart != null) {
+      await prefs.setString('quickBreakStart', quickBreakStart!.toIso8601String());
+    } else {
+      await prefs.remove('quickBreakStart');
+    }
 
-      // Restart timers if they were active
-      if (wasQuickBreakActive) {
-        setState(() {
-          isQuickBreakActive = true;
-        });
-        restartQuickBreakTimer();
+    if (mealBreakStart != null) {
+      await prefs.setString('mealBreakStart', mealBreakStart!.toIso8601String());
+    } else {
+      await prefs.remove('mealBreakStart');
+    }
+  }
+
+  void loadBreakStatus() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      isQuickBreak = prefs.getBool('isQuickBreak') ?? false;
+      isMealBreak = prefs.getBool('isMealBreak') ?? false;
+      quickElapsedSeconds = prefs.getInt('quickElapsedSeconds') ?? 0;
+      mealElapsedSeconds = prefs.getInt('mealElapsedSeconds') ?? 0;
+
+      String? quickStartStr = prefs.getString('quickBreakStart');
+      if (quickStartStr != null) {
+        quickBreakStart = DateTime.parse(quickStartStr);
       }
 
-      if (wasMealBreakActive) {
-        setState(() {
-          isMealBreakActive = true;
-        });
-        restartMealBreakTimer();
+      String? mealStartStr = prefs.getString('mealBreakStart');
+      if (mealStartStr != null) {
+        mealBreakStart = DateTime.parse(mealStartStr);
       }
+    });
 
-    } catch (e) {
-      debugPrint("Error loading timer data: $e");
+    if (isQuickBreak) startQuickTimer();
+    if (isMealBreak) startMealTimer();
+  }
+
+  void startBreak() {
+    if (selectedBreakType == 'Quick Break') {
+      if (!isQuickBreak) startQuickBreak();
+    } else {
+      if (!isMealBreak) startMealBreak();
     }
   }
 
-  Future<void> saveAllData() async {
-    await saveBreakData();
-    await saveTimerState();
-  }
-
-  Future<void> saveBreakData() async {
-    try {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.setInt(keyDailyBreakMinutes, dailyBreakMinutes);
-      await prefs.setInt(keyMonthlyBreakMinutes, monthlyBreakMinutes);
-      await prefs.setString(keyLastBreakDate, DateFormat('yyyy-MM-dd').format(DateTime.now()));
-    } catch (e) {
-      debugPrint("Error saving break data: $e");
-      Get.snackbar(
-        "Save Error",
-        "Failed to save break data. Please try again.",
-        backgroundColor: Colors.red.withOpacity(0.8),
-        colorText: Colors.white,
-      );
-    }
-  }
-
-  Future<void> saveTimerState() async {
-    try {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-
-      // Save current timer values
-      await prefs.setInt(keyQuickBreakSeconds, quickBreakSeconds);
-      await prefs.setInt(keyMealBreakSeconds, mealBreakSeconds);
-
-      // Save timer active states
-      await prefs.setBool(keyQuickBreakActive, isQuickBreakActive);
-      await prefs.setBool(keyMealBreakActive, isMealBreakActive);
-
-    } catch (e) {
-      debugPrint("Error saving timer state: $e");
-    }
-  }
-
-  Future<void> checkDateForReset() async {
-    try {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      String today = DateFormat('yyyy-MM-dd').format(DateTime.now());
-      String lastDate = prefs.getString(keyLastBreakDate) ?? today;
-
-      if (lastDate != today) {
-        // Day changed, transfer daily to monthly and reset daily
-        monthlyBreakMinutes += dailyBreakMinutes;
-        dailyBreakMinutes = 0;
-        await saveBreakData();
-
-        // New day, reset timers if needed
-        if (isQuickBreakActive) {
-          endQuickBreak(autoEnd: true);
-        }
-
-        if (isMealBreakActive) {
-          endMealBreak(autoEnd: true);
-        }
-      }
-
-      // Check for month change
-      DateTime lastDateTime = DateFormat('yyyy-MM-dd').parse(lastDate);
-      DateTime todayDateTime = DateFormat('yyyy-MM-dd').parse(today);
-
-      if (lastDateTime.month != todayDateTime.month) {
-        // Month changed, reset monthly counter
-        monthlyBreakMinutes = 0;
-        await saveBreakData();
-      }
-
-    } catch (e) {
-      debugPrint("Error checking date for reset: $e");
-    }
-  }
-
-  bool isWithinAllowedTime() {
-    final now = DateTime.now();
-    final hour = now.hour;
-    final minute = now.minute;
-    final currentTime = hour * 60 + minute;
-    final startTime = 19 * 60; // 7 PM
-    final endTime = 4 * 60;   // 4 AM
-    return currentTime >= startTime || currentTime < endTime;
-  }
-
-  void playSound(String assetPath) async {
-    try {
-      await _audioPlayer.play(AssetSource(assetPath));
-    } catch (e) {
-      debugPrint("Error playing sound: $e");
-      // Silent failure - don't let sound errors affect the app's main functionality
+  void endBreak() {
+    if (selectedBreakType == 'Quick Break') {
+      if (isQuickBreak) endQuickBreak();
+    } else {
+      if (isMealBreak) endMealBreak();
     }
   }
 
   void startQuickBreak() {
-    if (!isWithinAllowedTime()) {
-      Get.snackbar("Not Allowed", "Breaks are allowed only between 7 PM to 4 AM.",
-          backgroundColor: Colors.orange,
-          colorText: Colors.white);
-      return;
-    }
-
-    quickBreakTimer?.cancel();
-    quickBreakSeconds = 0;
     setState(() {
-      isQuickBreakActive = true;
+      isQuickBreak = true;
+      quickBreakStart = DateTime.now();
+      quickElapsedSeconds = 0;
     });
-
-    saveTimerState();
-    playSound(startSoundAsset);
-
-    Get.snackbar("Quick Break Started", "Your quick break has started.",
-      snackPosition: SnackPosition.TOP,
-      backgroundColor: Colors.green.withOpacity(0.8),
-      colorText: Colors.white,
-    );
-
-    restartQuickBreakTimer();
+    startQuickTimer();
+    saveBreakStatus();
+    Get.snackbar("Quick Break", "Quick break started", backgroundColor: AppColors.orangeShade);
   }
 
-  void restartQuickBreakTimer() {
-    quickBreakTimer?.cancel();
-
-    quickBreakTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+  void endQuickBreak() {
+    if (quickBreakStart != null) {
+      final endTime = DateTime.now();
+      final duration = endTime.difference(quickBreakStart!).inSeconds;
       setState(() {
-        quickBreakSeconds++;
-      });
-
-      if (quickBreakSeconds > 600) {
-        quickBreakTimer?.cancel();
-        setState(() {
-          isQuickBreakActive = false;
+        breakRecords.add({
+          'type': 'Quick Break',
+          'start': quickBreakStart.toString(),
+          'end': endTime.toString(),
+          'duration': duration
         });
-
-        dailyBreakMinutes += (quickBreakSeconds / 60).floor();
-        saveAllData();
-
-        playSound(endSoundAsset);
-
-        Get.snackbar("Quick Break Time Over", "Exceeded time limit (10 minutes).",
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: Colors.red.withOpacity(0.8),
-          colorText: Colors.white,
-        );
-      }
-    });
-  }
-
-  void endQuickBreak({bool autoEnd = false}) {
-    if (!isQuickBreakActive) return;
-
-    quickBreakTimer?.cancel();
-    setState(() {
-      isQuickBreakActive = false;
-    });
-
-    dailyBreakMinutes += (quickBreakSeconds / 60).floor();
-    saveAllData();
-
-    if (!autoEnd) {
-      playSound(endSoundAsset);
-
-      Get.snackbar("Quick Break Ended", "Your quick break has ended.",
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red.withOpacity(0.8),
-        colorText: Colors.white,
-      );
+        breakRecords.sort((a, b) => DateTime.parse(b['start']).compareTo(DateTime.parse(a['start'])));
+        isQuickBreak = false;
+        quickBreakStart = null;
+        _quickTimer?.cancel();
+      });
+      saveBreakRecords();
+      saveBreakStatus();
+      Get.snackbar("Quick break ended", "Duration: ${formatFullTime(duration)}", backgroundColor: AppColors.redColor);
     }
   }
 
   void startMealBreak() {
-    if (!isWithinAllowedTime()) {
-      Get.snackbar("Not Allowed", "Breaks are allowed only between 7 PM to 4 AM.",
-          backgroundColor: Colors.orange,
-          colorText: Colors.white);
-      return;
-    }
-
-    mealBreakTimer?.cancel();
-    mealBreakSeconds = 0;
     setState(() {
-      isMealBreakActive = true;
+      isMealBreak = true;
+      mealBreakStart = DateTime.now();
+      mealElapsedSeconds = 0;
     });
-
-    saveTimerState();
-    playSound(startSoundAsset);
-
-    Get.snackbar("Meal Break Started", "Your meal break has started.",
-      snackPosition: SnackPosition.TOP,
-      backgroundColor: Colors.green.withOpacity(0.8),
-      colorText: Colors.white,
-    );
-
-    restartMealBreakTimer();
+    startMealTimer();
+    saveBreakStatus();
+    Get.snackbar("Meal Break", "Meal break started", backgroundColor: AppColors.orangeShade);
   }
 
-  void restartMealBreakTimer() {
-    mealBreakTimer?.cancel();
-
-    mealBreakTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+  void endMealBreak() {
+    if (mealBreakStart != null) {
+      final endTime = DateTime.now();
+      final duration = endTime.difference(mealBreakStart!).inSeconds;
       setState(() {
-        mealBreakSeconds++;
-      });
-
-      if (mealBreakSeconds > 3600) {
-        mealBreakTimer?.cancel();
-        setState(() {
-          isMealBreakActive = false;
+        breakRecords.add({
+          'type': 'Meal Break',
+          'start': mealBreakStart.toString(),
+          'end': endTime.toString(),
+          'duration': duration
         });
-
-        dailyBreakMinutes += (mealBreakSeconds / 60).floor();
-        saveAllData();
-
-        playSound(endSoundAsset);
-
-        Get.snackbar("Meal Break Time Over", "Exceeded time limit (60 minutes).",
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: Colors.red.withOpacity(0.8),
-          colorText: Colors.white,
-        );
-      }
-    });
-  }
-
-  void endMealBreak({bool autoEnd = false}) {
-    if (!isMealBreakActive) return;
-
-    mealBreakTimer?.cancel();
-    setState(() {
-      isMealBreakActive = false;
-    });
-
-    dailyBreakMinutes += (mealBreakSeconds / 60).floor();
-    saveAllData();
-
-    if (!autoEnd) {
-      playSound(endSoundAsset);
-
-      Get.snackbar("Meal Break Ended", "Your meal break has ended.",
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red.withOpacity(0.8),
-        colorText: Colors.white,
-      );
+        breakRecords.sort((a, b) => DateTime.parse(b['start']).compareTo(DateTime.parse(a['start'])));
+        isMealBreak = false;
+        mealBreakStart = null;
+        _mealTimer?.cancel();
+      });
+      saveBreakRecords();
+      saveBreakStatus();
+      Get.snackbar("Meal break ended", "Duration: ${formatFullTime(duration)}", backgroundColor: AppColors.redColor);
     }
   }
 
-  String formatTime(int totalSeconds) {
-    final minutes = totalSeconds ~/ 60;
+  void startQuickTimer() {
+    _quickTimer?.cancel();
+    _quickTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      setState(() => quickElapsedSeconds++);
+      if (quickElapsedSeconds % 10 == 0) saveBreakStatus();
+    });
+  }
+
+  void startMealTimer() {
+    _mealTimer?.cancel();
+    _mealTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      setState(() => mealElapsedSeconds++);
+      if (mealElapsedSeconds % 10 == 0) saveBreakStatus();
+    });
+  }
+
+  String formatTime(int seconds) {
+    int minutes = (seconds / 60).floor();
+    int remainingSeconds = seconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${remainingSeconds.toString().padLeft(2, '0')}';
+  }
+
+  String formatFullTime(int totalSeconds) {
+    final hours = (totalSeconds ~/ 3600);
+    final minutes = ((totalSeconds % 3600) ~/ 60);
     final seconds = totalSeconds % 60;
-    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+    return '${hours.toString().padLeft(2, '0')}h ${minutes.toString().padLeft(2, '0')}m ${seconds.toString().padLeft(2, '0')}s';
+  }
+
+  int get activeBreakSeconds {
+    return selectedBreakType == 'Quick Break' ? quickElapsedSeconds : mealElapsedSeconds;
+  }
+
+  double get activeBreakPercent {
+    return selectedBreakType == 'Quick Break'
+        ? activeBreakSeconds / 600
+        : activeBreakSeconds / 3600;
+  }
+
+  int get dailyBreakSeconds {
+    final now = DateTime.now();
+    return breakRecords
+        .where((record) {
+      final date = DateTime.parse(record['start']);
+      return date.year == now.year &&
+          date.month == now.month &&
+          date.day == now.day;
+    })
+        .fold(0, (sum, record) => sum + (record['duration'] as int));
+  }
+
+  int get monthlyBreakSeconds {
+    final now = DateTime.now();
+    return breakRecords
+        .where((record) {
+      final date = DateTime.parse(record['start']);
+      return date.year == now.year && date.month == now.month;
+    })
+        .fold(0, (sum, record) => sum + (record['duration'] as int));
   }
 
   @override
   void dispose() {
-    // Save data before disposing
-    saveAllData();
-
-    // Cancel all timers
-    quickBreakTimer?.cancel();
-    mealBreakTimer?.cancel();
-    autoSaveTimer?.cancel();
-
-    _audioPlayer.dispose();
+    _quickTimer?.cancel();
+    _mealTimer?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    double quickPercent = quickBreakSeconds / 600;
-    double mealPercent = mealBreakSeconds / 3600;
+    final isBreakActive = (selectedBreakType == 'Quick Break' && isQuickBreak) ||
+        (selectedBreakType == 'Meal Break' && isMealBreak);
 
     return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 30),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      appBar: AppBar(
+        title: const Text("Break Tracker"),
+        backgroundColor: AppColors.appColor,
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
                 children: [
-                  Text("Quick Break (QB)", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  Row(
-                    children: [
-                      if (!isQuickBreakActive)
-                        ElevatedButton(
-                          onPressed: startQuickBreak,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue,
-                            padding: EdgeInsets.symmetric(horizontal: 8),
+                  Card(
+                    color: AppColors.appColor,
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text("Break Summary", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold,color: AppColors.whiteTheme)),
+                          const SizedBox(height: 12),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text("Today's Total:", style: TextStyle(fontSize: 16,color: AppColors.whiteTheme)),
+                              Text(formatFullTime(dailyBreakSeconds), style: const TextStyle(fontWeight: FontWeight.bold,color: AppColors.whiteTheme)),
+                            ],
                           ),
-                          child: Text("Start", style: TextStyle(color: Colors.white)),
-                        )
-                      else
-                        ElevatedButton(
-                          onPressed: endQuickBreak,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
-                            padding: EdgeInsets.symmetric(horizontal: 8),
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text("This Month's Total:", style: TextStyle(fontSize: 16,color: AppColors.whiteTheme)),
+                              Text(formatFullTime(monthlyBreakSeconds), style: const TextStyle(fontWeight: FontWeight.bold,color: AppColors.whiteTheme)),
+                            ],
                           ),
-                          child: Text("End", style: TextStyle(color: Colors.white)),
-                        ),
-                      SizedBox(width: 8),
-                      Text(formatTime(quickBreakSeconds), style: TextStyle(fontWeight: FontWeight.bold)),
-                    ],
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Card(
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                      child: DropdownButton<String>(
+                        value: selectedBreakType,
+                        isExpanded: true,
+                        underline: const SizedBox(),
+                        items: ['Quick Break', 'Meal Break'].map((String value) {
+                          return DropdownMenuItem<String>(value: value, child: Text(value));
+                        }).toList(),
+                        onChanged: isBreakActive ? null : (String? newValue) {
+                          setState(() {
+                            selectedBreakType = newValue!;
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Card(
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(selectedBreakType, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                              Text(formatTime(activeBreakSeconds), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                            ],
+                          ),
+                          const SizedBox(height: 5),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(5),
+                            child: LinearProgressIndicator(
+                              value: activeBreakPercent,
+                              backgroundColor: Colors.grey[200],
+                              color: (isQuickBreak && activeBreakSeconds > 600) ||
+                                  (isMealBreak && activeBreakSeconds > 3600)
+                                  ? Colors.red
+                                  : AppColors.appColor,
+                              minHeight: 10,
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: isBreakActive ? endBreak : startBreak,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: isBreakActive ? AppColors.redColor : AppColors.appColor,
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              ),
+                              child: Text(
+                                isBreakActive ? "STOP BREAK" : "START BREAK",
+                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
-              BreakProgressBar(
-                label: "Quick Break",
-                progress: quickPercent,
-                isExceeded: quickBreakSeconds > 600,
-                timeText: formatTime(quickBreakSeconds),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Text(
+                "Break History",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.appColor),
               ),
-              const SizedBox(height: 40),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text("Meal Break (MB)", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  Row(
-                    children: [
-                      if (!isMealBreakActive)
-                        ElevatedButton(
-                          onPressed: startMealBreak,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue,
-                            padding: EdgeInsets.symmetric(horizontal: 8),
-                          ),
-                          child: Text("Start", style: TextStyle(color: Colors.white)),
-                        )
-                      else
-                        ElevatedButton(
-                          onPressed: endMealBreak,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
-                            padding: EdgeInsets.symmetric(horizontal: 8),
-                          ),
-                          child: Text("End", style: TextStyle(color: Colors.white)),
-                        ),
-                      SizedBox(width: 8),
-                      Text(formatTime(mealBreakSeconds), style: TextStyle(fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                ],
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: breakRecords.isEmpty
+                  ? const Center(child: Text("No break records yet"))
+                  : ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: breakRecords.length,
+                itemBuilder: (context, index) {
+                  final record = breakRecords[index];
+                  return Card(
+                    color: AppColors.appColor,
+                    child: ListTile(
+                      title: Text(record['type'],style: TextStyle(fontWeight: FontWeight.bold,color: AppColors.whiteTheme),),
+                      subtitle: Text("Start: ${record['start']}\nEnd: ${record['end']}",style: TextStyle(fontSize: 16,color: AppColors.whiteTheme),),
+                      trailing: Text(formatTime(record['duration']),style: TextStyle(fontWeight: FontWeight.bold,color: AppColors.whiteTheme),),
+                    ),
+                  );
+                },
               ),
-              const SizedBox(height: 10),
-              BreakProgressBar(
-                label: "Meal Break",
-                progress: mealPercent,
-                isExceeded: mealBreakSeconds > 3600,
-                timeText: formatTime(mealBreakSeconds),
-              ),
-              const SizedBox(height: 30),
-              Card(
-                elevation: 4,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("Break Summary", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                      SizedBox(height: 12),
-                      Text("Today's Total Break: $dailyBreakMinutes min",
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-                      SizedBox(height: 8),
-                      Text("This Month's Total Break: ${(monthlyBreakMinutes / 60).toStringAsFixed(2)} hr",
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-                    ],
-                  ),
-                ),
-              ),
-              Spacer(),
-              Center(
-                child: ElevatedButton.icon(
-                  onPressed: saveAllData,
-                  icon: Icon(Icons.save),
-                  label: Text("Save Break Data"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  ),
-                ),
-              ),
-              SizedBox(height: 20),
-            ],
-          ),
+            ),
+            // ... break history UI remains unchanged
+          ],
         ),
       ),
-    );
-  }
-}
-
-class BreakProgressBar extends StatelessWidget {
-  final String label;
-  final double progress;
-  final bool isExceeded;
-  final String timeText;
-
-  const BreakProgressBar({
-    super.key,
-    required this.label,
-    required this.progress,
-    required this.isExceeded,
-    required this.timeText,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          "$label Progress",
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
-            color: isExceeded ? Colors.red : Colors.blue,
-          ),
-        ),
-        const SizedBox(height: 8),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: LinearProgressIndicator(
-            value: progress.clamp(0.0, 1.0),
-            minHeight: 10,
-            backgroundColor: Colors.grey[200],
-            valueColor: AlwaysStoppedAnimation<Color>(
-              isExceeded ? Colors.red : Colors.blue,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

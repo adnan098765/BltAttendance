@@ -1,16 +1,13 @@
 import 'package:attendance/AppColors/app_colors.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
 import 'model.dart';
 
 class EmployeeAttendanceScreen extends StatefulWidget {
   const EmployeeAttendanceScreen({super.key});
 
   @override
-  State<EmployeeAttendanceScreen> createState() =>
-      _EmployeeAttendanceScreenState();
+  State<EmployeeAttendanceScreen> createState() => _EmployeeAttendanceScreenState();
 }
 
 class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
@@ -19,9 +16,7 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
   @override
   void initState() {
     super.initState();
-    EmployeeData.loadData().then((_) {
-      setState(() {});
-    });
+    EmployeeData.loadData().then((_) => setState(() {}));
   }
 
   void _addEmployee() {
@@ -46,9 +41,7 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(onPressed: (){
-          Get.back();
-        }, icon: Icon(Icons.arrow_back_ios)),
+        leading: IconButton(onPressed: () => Get.back(), icon: const Icon(Icons.arrow_back_ios)),
         title: const Text('Add Employees'),
         backgroundColor: AppColors.orangeShade,
       ),
@@ -67,10 +60,7 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
                     ),
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.add),
-                  onPressed: _addEmployee,
-                ),
+                IconButton(icon: const Icon(Icons.add), onPressed: _addEmployee),
               ],
             ),
             const SizedBox(height: 20),
@@ -85,13 +75,8 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
                     ),
                     trailing: IconButton(
                       icon: Icon(
-                        employees[index].isPresent
-                            ? Icons.check_circle
-                            : Icons.cancel,
-                        color:
-                            employees[index].isPresent
-                                ? Colors.green
-                                : Colors.red,
+                        employees[index].isPresent ? Icons.check_circle : Icons.cancel,
+                        color: employees[index].isPresent ? AppColors.greenColor : AppColors.redColor,
                       ),
                       onPressed: () => _toggleAttendance(index),
                     ),

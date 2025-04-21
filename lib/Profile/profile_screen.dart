@@ -1,5 +1,8 @@
 import 'package:attendance/AppColors/app_colors.dart';
+import 'package:attendance/Profile/profile_details_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
@@ -34,6 +37,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
+        leading: IconButton(
+          onPressed: () => Get.back(),
+          icon: const Icon(Icons.arrow_back_ios),
+        ),
         backgroundColor: Colors.white,
         elevation: 0,
         title: const Text(
@@ -78,7 +85,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ProfileMenu(
               text: "My Account",
               icon: Icons.person,
-              press: () {},
+              press: () {
+              Get.to(ProfileDetailsScreen());
+              },
             ),
             ProfileMenu(
               text: "Notifications",

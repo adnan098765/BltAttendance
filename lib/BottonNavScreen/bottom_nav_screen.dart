@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import '../Home/home_screen.dart';
 import '../Profile/profile_screen.dart';
 
-
 class BottomNavScreen extends StatefulWidget {
   const BottomNavScreen({Key? key}) : super(key: key);
 
@@ -15,11 +14,11 @@ class BottomNavScreen extends StatefulWidget {
 }
 
 class _BottomNavScreenState extends State<BottomNavScreen> {
-  int _selectedIndex = 2;
+  int _selectedIndex = 2; // Default to Home screen
 
   final List<Widget> _screens = [
     const LeaveScreen(),
-    const BreaksScreen(),
+    const BreakTrackerScreen(),
     const HomeScreen(),
     const TimetableScreen(),
     const ProfileScreen(),
@@ -27,16 +26,13 @@ class _BottomNavScreenState extends State<BottomNavScreen> {
 
   void _onItemSelected(int index) {
     setState(() {
-      _selectedIndex = index;
+      _selectedIndex = index; // Allow navigation to any screen
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // appBar: AppBar(
-      //   backgroundColor: Theme.of(context).primaryColor,
-      // ),
       body: _screens[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
@@ -67,7 +63,6 @@ class _BottomNavScreenState extends State<BottomNavScreen> {
           ),
         ],
       ),
-
     );
   }
 }

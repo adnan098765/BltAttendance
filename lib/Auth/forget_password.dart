@@ -3,7 +3,7 @@ import 'package:attendance/Auth/new_password_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import 'custom_text_field.dart';
+import '../Widgets/custom_text_field.dart';
 
 class ForgotPasswordScreen extends StatelessWidget {
   final _formKey = GlobalKey<FormState>();
@@ -13,6 +13,7 @@ class ForgotPasswordScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    double height = MediaQuery.of(context).size.height;
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -27,7 +28,7 @@ class ForgotPasswordScreen extends StatelessWidget {
               //   onPressed: () => Get.back(),
               // ),
 
-              const SizedBox(height: 40),
+               SizedBox(height:height*0.050),
 
               // Title
               Text(
@@ -40,7 +41,6 @@ class ForgotPasswordScreen extends StatelessWidget {
 
               const SizedBox(height: 8),
 
-              // Subtitle
               Text(
                 "Enter your email to reset your password",
                 style: TextStyle(
@@ -73,7 +73,7 @@ class ForgotPasswordScreen extends StatelessWidget {
                       },
                     ),
 
-                    const SizedBox(height: 24),
+                     SizedBox(height: height*0.034),
 
                     // Next Button
                     SizedBox(

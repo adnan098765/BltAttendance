@@ -45,6 +45,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
+    double height = MediaQuery.of(context).size.height;
+    double width = MediaQuery.of(context).size.width;
     return Scaffold(
       body: Stack(
         children: [
@@ -63,8 +65,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               scale: _animation,
               child: Image.asset(
                 'assets/images/img.png',
-                width: 400,
-                height: 400,
+                width: width,
+                height: height*0.600,
               ),
             ),
           ),

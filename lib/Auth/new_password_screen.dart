@@ -18,6 +18,7 @@ class ChangePasswordScreen extends StatelessWidget {
     bool _buttonPressed = false;
 
     return Scaffold(
+
       backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
@@ -31,7 +32,7 @@ class ChangePasswordScreen extends StatelessWidget {
               //   onPressed: () => Get.back(),
               // ),
 
-              const SizedBox(height: 40),
+               SizedBox(height:height*0.0540),
 
               // Title
               Text(
@@ -42,7 +43,7 @@ class ChangePasswordScreen extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 8),
+               SizedBox(height: height*0.012),
 
               // Subtitle
               Text(
@@ -112,7 +113,7 @@ class ChangePasswordScreen extends StatelessWidget {
                       ),
                     ),
 
-                    const SizedBox(height: 20),
+                     SizedBox(height:height*0.02520),
 
                     // Confirm Password Field
                     Container(
@@ -165,7 +166,7 @@ class ChangePasswordScreen extends StatelessWidget {
                       ),
                     ),
 
-                    const SizedBox(height: 30),
+                     SizedBox(height: height*0.030),
 
                     // Change Password Button
                     MouseRegion(
