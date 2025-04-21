@@ -236,7 +236,7 @@ class _SignupScreenState extends State<SignupScreen> {
         ),
         dropdownColor: Colors.grey[200],
         style: TextStyle(fontSize: 16, color: Colors.black87),
-        items: ["Active", "Inactive"].map((String value) {
+        items: ["1", "0"].map((String value) {
           return DropdownMenuItem<String>(
             value: value,
             child: Text(value),
