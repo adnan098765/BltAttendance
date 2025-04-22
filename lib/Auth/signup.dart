@@ -27,8 +27,8 @@ class _SignupScreenState extends State<SignupScreen> {
   final TextEditingController registrationDateController = TextEditingController();
 
   String selectedGender = "Male";
-  String selectedStatus = "Active"; // New status
-  String selectedRole = "User"; // New role
+  String selectedStatus = "Active";
+  String selectedRole = "0";
 
   @override
   Widget build(BuildContext context) {
@@ -236,7 +236,7 @@ class _SignupScreenState extends State<SignupScreen> {
         ),
         dropdownColor: Colors.grey[200],
         style: TextStyle(fontSize: 16, color: Colors.black87),
-        items: ["1", "0"].map((String value) {
+        items: ["Active", "Inactive"].map((String value) {
           return DropdownMenuItem<String>(
             value: value,
             child: Text(value),
@@ -285,7 +285,7 @@ class _SignupScreenState extends State<SignupScreen> {
         ),
         dropdownColor: Colors.grey[200],
         style: TextStyle(fontSize: 16, color: Colors.black87),
-        items: ["User", "Admin"].map((String value) {
+        items: ["0", "1"].map((String value) {
           return DropdownMenuItem<String>(
             value: value,
             child: Text(value),
