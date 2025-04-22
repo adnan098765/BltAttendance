@@ -1,10 +1,13 @@
-import 'dart:convert';
-import 'package:attendance/Auth/login_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class SignupController extends GetxController {
+  // Form key
+  final formKey = GlobalKey<FormState>();
+
+  // Text Editing Controllers
   final fullName = TextEditingController();
   final fatherName = TextEditingController();
   final phoneNumber = TextEditingController();
@@ -16,15 +19,96 @@ class SignupController extends GetxController {
   final confirmPassword = TextEditingController();
   final registrationDate = TextEditingController();
 
-  final gender = "M".obs;
-  final status = "1".obs;
-  final role = "0".obs;
+  // Observable fields
+  var gender = ''.obs;
+  var status = ''.obs;
+  var role = ''.obs;
+  var isLoading = false.obs;
+  var showPassword = false.obs;
+  var showConfirmPassword = false.obs;
 
-  final formKey = GlobalKey<FormState>();
-  final isLoading = false.obs;
+  // Validators
+  String? validatePhone(String? value) {
+    if (value == null || value.isEmpty) return 'Phone is required';
+    if (!RegExp(r'^[0-9]{11}$').hasMatch(value)) return 'Enter valid 11-digit number';
+    return null;
+  }
 
-  final showPassword = false.obs;
-  final showConfirmPassword = false.obs;
+  String? validateCNIC(String? value) {
+    if (value == null || value.isEmpty) return 'CNIC is required';
+    if (!RegExp(r'^[0-9]{13}$').hasMatch(value)) return 'Enter valid 13-digit CNIC';
+    return null;
+  }
+
+  String? validateEmail(String? value) {
+    if (value == null || value.isEmpty) return 'Email is required';
+    if (!GetUtils.isEmail(value)) return 'Enter a valid email';
+    return null;
+  }
+
+  String? validatePassword(String? value) {
+    if (value == null || value.isEmpty) return 'Password is required';
+    if (value.length < 6) return 'Password must be at least 6 characters';
+    return null;
+  }
+
+  String? validateConfirmPassword(String? value) {
+    if (value == null || value.isEmpty) return 'Confirm your password';
+    if (value != password.text) return 'Passwords do not match';
+    return null;
+  }
+
+  void registerUser() async {
+    if (!formKey.currentState!.validate()) return;
+
+    isLoading.value = true;
+
+    final Map<String, dynamic> payload = {
+      "fullName": fullName.text.trim(),
+      "fatherName": fatherName.text.trim(),
+      "gender": gender.value,
+      "phoneNumber": phoneNumber.text.trim(),
+      "cnic": cnic.text.trim(),
+      "email": email.text.trim(),
+      "address": address.text.trim(),
+      "userName": userName.text.trim(),
+      "password": password.text.trim(),
+      "registrationDate": registrationDate.text.trim(),
+      "status": int.tryParse(status.value) ?? 0,
+      "role": int.tryParse(role.value) ?? 0
+    };
+
+    try {
+      final response = await http.post(
+        Uri.parse('https://your-api-endpoint.com/api/register'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(payload),
+      );
+
+      isLoading.value = false;
+
+      if (response.statusCode == 200) {
+        Get.snackbar("Success", "User registered successfully");
+        // Optionally clear the form or navigate to another page
+      } else {
+        final errorResponse = json.decode(response.body);
+        Get.snackbar(
+            "Error",
+            "Registration failed: ${errorResponse['message'] ?? 'Unknown error'}",
+            backgroundColor: Colors.redAccent,
+            colorText: Colors.white
+        );
+      }
+    } catch (e) {
+      isLoading.value = false;
+      Get.snackbar(
+          "Error",
+          "Network error: ${e.toString()}",
+          backgroundColor: Colors.redAccent,
+          colorText: Colors.white
+      );
+    }
+  }
 
   @override
   void onClose() {
@@ -39,110 +123,5 @@ class SignupController extends GetxController {
     confirmPassword.dispose();
     registrationDate.dispose();
     super.onClose();
-  }
-
-  String? validatePassword(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Please enter password';
-    }
-    if (value.length < 6) {
-      return 'Password must be at least 6 characters';
-    }
-    if (value != confirmPassword.text) {
-      return 'Passwords do not match';
-    }
-    return null;
-  }
-
-  String? validateConfirmPassword(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Please confirm password';
-    }
-    if (value != password.text) {
-      return 'Passwords do not match';
-    }
-    return null;
-  }
-
-  String? validateEmail(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Please enter email';
-    }
-    if (!GetUtils.isEmail(value)) {
-      return 'Please enter valid email';
-    }
-    return null;
-  }
-
-  String? validatePhone(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Please enter phone number';
-    }
-    if (!GetUtils.isPhoneNumber(value)) {
-      return 'Please enter valid phone number';
-    }
-    return null;
-  }
-
-  String? validateCNIC(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Please enter CNIC';
-    }
-    if (!GetUtils.isLengthEqualTo(value, 13)) {
-      return 'CNIC must be 13 digits';
-    }
-    return null;
-  }
-
-  Future<void> registerUser() async {
-    if (!formKey.currentState!.validate()) return;
-
-    isLoading.value = true;
-
-    try {
-      final int statusValue = status.value == "Active" ? 1 : 0;
-      final int roleValue = int.parse(role.value);
-      final response = await http.post(
-        Uri.parse("http://crolahore.azurewebsites.net/api/Master/SaveLpUsers"),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "fullName": fullName.text.trim(),
-          "fatherName": fatherName.text.trim(),
-          "gender": gender.value,
-          "phoneNumber": phoneNumber.text.trim(),
-          "cnic": cnic.text.trim(),
-          "email": email.text.trim(),
-          "address": address.text.trim(),
-          "userName": userName.text.trim(),
-          "password": password.text.trim(),
-          "registrationDate": registrationDate.text.trim(),
-          "status": statusValue,
-          "role": roleValue,
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        Get.offAll(LoginScreen());
-        Get.snackbar(
-          "Success",
-          "Registration completed successfully",
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
-      } else {
-        throw "Server error: ${response.statusCode}";
-      }
-    } catch (e) {
-      Get.snackbar(
-        "Error",
-        e.toString(),
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-    } finally {
-      isLoading.value = false;
-    }
   }
 }
