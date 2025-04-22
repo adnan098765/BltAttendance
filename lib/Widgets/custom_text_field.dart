@@ -29,6 +29,15 @@ class CustomTextField extends StatefulWidget {
   final double? prefixIconSize;
   final double? suffixIconSize;
   final VoidCallback? onSuffixIconPressed;
+  final bool showPasswordToggle;
+  final Color? borderColor;
+  final double borderRadius;
+  final Color? iconColor;
+  final Color? textColor;
+  final Color? hintColor;
+  final Color? labelColor;
+  final Color? cursorColor;
+  final bool showShadow;
 
   const CustomTextField({
     super.key,
@@ -53,12 +62,21 @@ class CustomTextField extends StatefulWidget {
     this.contentPadding,
     this.hintStyle,
     this.style,
-    this.obscuringCharacter = "*",
+    this.obscuringCharacter = '•',
     this.enableInteractiveSelection = true,
     this.textCapitalization = TextCapitalization.none,
     this.prefixIconSize,
     this.suffixIconSize,
     this.onSuffixIconPressed,
+    this.showPasswordToggle = true,
+    this.borderColor,
+    this.borderRadius = 10.0,
+    this.iconColor,
+    this.textColor,
+    this.hintColor,
+    this.labelColor,
+    this.cursorColor,
+    this.showShadow = true,
   });
 
   @override
@@ -71,8 +89,9 @@ class _CustomTextFieldState extends State<CustomTextField> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
+      decoration: widget.showShadow
+          ? BoxDecoration(
+        borderRadius: BorderRadius.circular(widget.borderRadius),
         boxShadow: [
           BoxShadow(
             color: Colors.grey.withOpacity(0.1),
@@ -81,7 +100,8 @@ class _CustomTextFieldState extends State<CustomTextField> {
             offset: const Offset(0, 2),
           ),
         ],
-      ),
+      )
+          : null,
       child: TextFormField(
         controller: widget.controller,
         keyboardType: widget.keyboardType,
@@ -97,51 +117,68 @@ class _CustomTextFieldState extends State<CustomTextField> {
         textInputAction: widget.textInputAction,
         autofocus: widget.autoFocus,
         focusNode: widget.focusNode,
-        style: widget.style,
+        style: widget.style ??
+            TextStyle(
+              color: widget.textColor ?? Colors.black,
+            ),
+        cursorColor: widget.cursorColor ?? AppColors.orangeShade,
         enableInteractiveSelection: widget.enableInteractiveSelection,
         textCapitalization: widget.textCapitalization,
         decoration: InputDecoration(
           filled: true,
           fillColor: widget.fillColor ?? Colors.grey[200],
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide.none,
+            borderRadius: BorderRadius.circular(widget.borderRadius),
+            borderSide: BorderSide(
+              color: widget.borderColor ?? Colors.transparent,
+            ),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(widget.borderRadius),
+            borderSide: BorderSide(
+              color: widget.borderColor ?? Colors.transparent,
+            ),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(widget.borderRadius),
             borderSide: BorderSide(
-              color: AppColors.orangeShade,
+              color: widget.borderColor ?? AppColors.orangeShade,
               width: 1.5,
             ),
           ),
           errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(widget.borderRadius),
             borderSide: const BorderSide(
               color: Colors.red,
               width: 1.0,
             ),
           ),
           focusedErrorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(widget.borderRadius),
             borderSide: const BorderSide(
               color: Colors.red,
               width: 1.5,
             ),
           ),
           hintText: widget.hintText,
-          hintStyle: widget.hintStyle ?? TextStyle(color: Colors.grey[600]),
+          hintStyle: widget.hintStyle ??
+              TextStyle(
+                color: widget.hintColor ?? Colors.grey[600],
+              ),
           labelText: widget.labelText,
-          labelStyle: TextStyle(color: Colors.grey[600]),
+          labelStyle: TextStyle(
+            color: widget.labelColor ?? Colors.grey[600],
+          ),
           prefixIcon: Icon(
             widget.prefixIcon,
-            color: Colors.grey[600],
+            color: widget.iconColor ?? Colors.grey[600],
             size: widget.prefixIconSize,
           ),
           suffixIcon: _buildSuffixIcon(),
           contentPadding: widget.contentPadding ??
               const EdgeInsets.symmetric(
-                vertical: 15,
-                horizontal: 15,
+                vertical: 16,
+                horizontal: 16,
               ),
         ),
       ),
@@ -149,26 +186,31 @@ class _CustomTextFieldState extends State<CustomTextField> {
   }
 
   Widget? _buildSuffixIcon() {
+    // If custom suffix icon is provided
     if (widget.suffixIcon != null) {
       return IconButton(
         icon: Icon(
           widget.suffixIcon,
-          color: Colors.grey[600],
+          color: widget.iconColor ?? Colors.grey[600],
           size: widget.suffixIconSize,
         ),
         onPressed: widget.onSuffixIconPressed,
+        padding: EdgeInsets.zero,
       );
-    } else if (widget.obscureText) {
+    }
+    // If it's a password field and toggle is enabled
+    else if (widget.obscureText && widget.showPasswordToggle) {
       return IconButton(
         icon: Icon(
           _showPassword ? Icons.visibility : Icons.visibility_off,
-          color: Colors.grey[600],
+          color: widget.iconColor ?? Colors.grey[600],
         ),
         onPressed: () {
           setState(() {
             _showPassword = !_showPassword;
           });
         },
+        padding: EdgeInsets.zero,
       );
     }
     return null;

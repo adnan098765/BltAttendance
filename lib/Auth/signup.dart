@@ -1,127 +1,184 @@
-import 'package:attendance/Auth/login_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
-import '../BreakTracker/break_tracker_screen.dart';
-import '../Widgets/text_widget.dart';
+import 'package:attendance/Auth/login_screen.dart';
 import '../AppColors/app_colors.dart';
+import '../Controllers/signup_controller.dart';
 import '../Widgets/custom_text_field.dart';
+import '../Widgets/text_widget.dart';
 
-class SignupScreen extends StatefulWidget {
-  const SignupScreen({super.key});
+class SignupScreen extends StatelessWidget {
+  SignupScreen({super.key});
 
-  @override
-  State<SignupScreen> createState() => _SignupScreenState();
-}
-
-class _SignupScreenState extends State<SignupScreen> {
-  final TextEditingController fullNameController = TextEditingController();
-  final TextEditingController fatherNameController = TextEditingController();
-  final TextEditingController phoneNumberController = TextEditingController();
-  final TextEditingController cnicController = TextEditingController();
-  final TextEditingController mailNameController = TextEditingController();
-  final TextEditingController addressController = TextEditingController();
-  final TextEditingController userNameController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController = TextEditingController();
-  final TextEditingController registrationDateController = TextEditingController();
-
-  String selectedGender = "Male";
-  String selectedStatus = "Active";
-  String selectedRole = "0";
+  final SignupController controller = Get.put(SignupController());
 
   @override
   Widget build(BuildContext context) {
-    double height = MediaQuery.of(context).size.height;
-    double width = MediaQuery.of(context).size.width;
-
     return Scaffold(
       backgroundColor: AppColors.whiteTheme,
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(height: height * 0.04),
-                CustomText(
+      body: Form(
+        key: controller.formKey,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 20),
+              Center(
+                child: CustomText(
                   text: "Registration Form",
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: AppColors.orangeShade,
                 ),
-                SizedBox(height: height * 0.025),
-                CustomTextField(
-                  controller: fullNameController,
-                  hintText: "Full Name",
-                  prefixIcon: Icons.person,
+              ),
+              const SizedBox(height: 30),
+
+              // Full Name
+              CustomTextField(
+                controller: controller.fullName,
+                hintText: "Full Name",
+                prefixIcon: Icons.person,
+                validator: (value) => value?.isEmpty ?? true ? 'Required field' : null,
+              ),
+              const SizedBox(height: 15),
+
+              // Father Name
+              CustomTextField(
+                controller: controller.fatherName,
+                hintText: "Father Name",
+                prefixIcon: Icons.person,
+                validator: (value) => value?.isEmpty ?? true ? 'Required field' : null,
+              ),
+              const SizedBox(height: 15),
+
+              // Gender Dropdown
+              _buildGenderDropdown(),
+              const SizedBox(height: 15),
+
+              // Phone Number
+              CustomTextField(
+                controller: controller.phoneNumber,
+                hintText: "Mobile Number",
+                prefixIcon: Icons.phone,
+                keyboardType: TextInputType.phone,
+                validator: controller.validatePhone,
+              ),
+              const SizedBox(height: 15),
+
+              // CNIC
+              CustomTextField(
+                controller: controller.cnic,
+                hintText: "CNIC (without dashes)",
+                prefixIcon: Icons.credit_card,
+                keyboardType: TextInputType.number,
+                validator: controller.validateCNIC,
+              ),
+              const SizedBox(height: 15),
+
+              // Email
+              CustomTextField(
+                controller: controller.email,
+                hintText: "Email",
+                prefixIcon: Icons.email,
+                keyboardType: TextInputType.emailAddress,
+                validator: controller.validateEmail,
+              ),
+              const SizedBox(height: 15),
+
+              // Address
+              CustomTextField(
+                controller: controller.address,
+                hintText: "Address",
+                prefixIcon: Icons.location_on,
+                validator: (value) => value?.isEmpty ?? true ? 'Required field' : null,
+              ),
+              const SizedBox(height: 15),
+
+              // Username
+              CustomTextField(
+                controller: controller.userName,
+                hintText: "Username",
+                prefixIcon: Icons.person_outline,
+                validator: (value) => value?.isEmpty ?? true ? 'Required field' : null,
+              ),
+              const SizedBox(height: 15),
+
+              // Password Field
+              Obx(() => CustomTextField(
+                controller: controller.password,
+                hintText: "Password",
+                prefixIcon: Icons.lock,
+                suffixIcon: controller.showPassword.value ? Icons.visibility : Icons.visibility_off,
+                obscureText: !controller.showPassword.value,
+                validator: controller.validatePassword,
+                onSuffixIconPressed: () => controller.showPassword.toggle(),
+              )),
+              const SizedBox(height: 15),
+
+// Confirm Password Field
+              Obx(() => CustomTextField(
+                controller: controller.confirmPassword,
+                hintText: "Confirm Password",
+                prefixIcon: Icons.lock,
+                suffixIcon: controller.showConfirmPassword.value ? Icons.visibility : Icons.visibility_off,
+                obscureText: !controller.showConfirmPassword.value,
+                validator: controller.validateConfirmPassword,
+                onSuffixIconPressed: () => controller.showConfirmPassword.toggle(),
+              )),
+              const SizedBox(height: 15),
+
+              // Registration Date
+              _buildRegistrationDateField(),
+              const SizedBox(height: 15),
+
+              // Status Dropdown
+              _buildStatusDropdown(),
+              const SizedBox(height: 15),
+
+              // Role Dropdown
+              _buildRoleDropdown(),
+              const SizedBox(height: 25),
+
+              Obx(() => ElevatedButton(
+                onPressed: controller.isLoading.value ? null : controller.registerUser,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.orangeShade,
+                  minimumSize: const Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
-                SizedBox(height: height * 0.025),
-                CustomTextField(
-                  controller: fatherNameController,
-                  hintText: "Father Name",
-                  prefixIcon: Icons.person,
+                child: controller.isLoading.value
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text(
+                  "Register",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
-                SizedBox(height: height * 0.025),
-                _buildGenderDropdown(),
-                SizedBox(height: height * 0.025),
-                CustomTextField(
-                  controller: phoneNumberController,
-                  hintText: "Mobile Number",
-                  prefixIcon: Icons.phone,
-                ),
-                SizedBox(height: height * 0.025),
-                CustomTextField(
-                  controller: cnicController,
-                  hintText: "CNIC",
-                  prefixIcon: Icons.person_2_outlined,
-                ),
-                SizedBox(height: height * 0.025),
-                CustomTextField(
-                  controller: mailNameController,
-                  hintText: "Email",
-                  prefixIcon: Icons.mail,
-                ),
-                SizedBox(height: height * 0.025),
-                CustomTextField(
-                  controller: addressController,
-                  hintText: "Address",
-                  prefixIcon: Icons.home,
-                ),
-                SizedBox(height: height * 0.025),
-                CustomTextField(
-                  controller: userNameController,
-                  hintText: "Username",
-                  prefixIcon: Icons.person,
-                ),
-                SizedBox(height: height * 0.025),
-                CustomTextField(
-                  controller: passwordController,
-                  hintText: "Password",
-                  prefixIcon: Icons.lock,
-                  obscureText: true,
-                ),
-                SizedBox(height: height * 0.025),
-                CustomTextField(
-                  controller: confirmPasswordController,
-                  hintText: "Confirm Password",
-                  prefixIcon: Icons.lock,
-                  obscureText: true,
-                ),
-                SizedBox(height: height * 0.025),
-                _buildRegistrationDateField(),
-                SizedBox(height: height * 0.025),
-                _buildStatusDropdown(),
-                SizedBox(height: height * 0.025),
-                _buildRoleDropdown(),
-                SizedBox(height: height * 0.025),
-                _buildRegisterButton(),
-                SizedBox(height: height * 0.025),
-                _buildLoginPrompt(height, width),
-                SizedBox(height: height * 0.04),
-              ],
-            ),
+              )),
+              const SizedBox(height: 15),
+
+              // Login Prompt
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text("Already have an account?"),
+                  TextButton(
+                    onPressed: () => Get.off(() => LoginScreen()),
+                    child: Text(
+                      "Login",
+                      style: TextStyle(
+                        color: AppColors.orangeShade,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ),
@@ -129,232 +186,87 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   Widget _buildGenderDropdown() {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 5,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: DropdownButtonFormField<String>(
-        value: selectedGender,
-        decoration: InputDecoration(
-          filled: true,
-          fillColor: Colors.grey[200],
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(
-              color: AppColors.orangeShade,
-              width: 1.5,
-            ),
-          ),
-          prefixIcon: Icon(Icons.person_outline, color: Colors.grey[600]),
-          contentPadding: EdgeInsets.symmetric(horizontal: 15, vertical: 2),
-        ),
-        dropdownColor: Colors.grey[200],
-        style: TextStyle(fontSize: 16, color: Colors.black87),
-        items: ["Male", "Female", "Other"].map((String value) {
-          return DropdownMenuItem<String>(
-            value: value,
-            child: Text(value),
-          );
-        }).toList(),
-        onChanged: (newValue) {
-          setState(() {
-            selectedGender = newValue!;
-          });
-        },
-      ),
-    );
+    return Obx(() => DropdownButtonFormField<String>(
+      value: controller.gender.value,
+      decoration: _dropdownDecoration(Icons.person_outline),
+      items: ["M", "F", "O"].map((String value) {
+        return DropdownMenuItem<String>(
+          value: value,
+          child: Text(value),
+        );
+      }).toList(),
+      onChanged: (value) => controller.gender.value = value!,
+      validator: (value) => value == null ? 'Please select gender' : null,
+    ));
   }
 
   Widget _buildRegistrationDateField() {
-    return GestureDetector(
+    return TextFormField(
+      controller: controller.registrationDate,
+      readOnly: true,
+
+      decoration: _dropdownDecoration(Icons.calendar_today),
       onTap: () async {
-        DateTime? pickedDate = await showDatePicker(
-          context: context,
+        final DateTime? pickedDate = await showDatePicker(
+          context: Get.context!,
           initialDate: DateTime.now(),
           firstDate: DateTime(2000),
-          lastDate: DateTime(2101),
+          lastDate: DateTime(2100),
         );
         if (pickedDate != null) {
-          setState(() {
-            registrationDateController.text = "${pickedDate.toLocal()}".split(' ')[0]; // Format as needed
-          });
+          controller.registrationDate.text =
+          "${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}";
         }
       },
-      child: AbsorbPointer(
-        child: CustomTextField(
-          controller: registrationDateController,
-          hintText: "Registration Date",
-          prefixIcon: Icons.calendar_today,
-        ),
-      ),
+      validator: (value) => value?.isEmpty ?? true ? 'Required field' : null,
     );
   }
 
   Widget _buildStatusDropdown() {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 5,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: DropdownButtonFormField<String>(
-        value: selectedStatus,
-        decoration: InputDecoration(
-          filled: true,
-          fillColor: Colors.grey[200],
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(
-              color: AppColors.orangeShade,
-              width: 1.5,
-            ),
-          ),
-          prefixIcon: Icon(Icons.check_circle_outline, color: Colors.grey[600]),
-          contentPadding: EdgeInsets.symmetric(horizontal: 15, vertical: 2),
-        ),
-        dropdownColor: Colors.grey[200],
-        style: TextStyle(fontSize: 16, color: Colors.black87),
-        items: ["Active", "Inactive"].map((String value) {
-          return DropdownMenuItem<String>(
-            value: value,
-            child: Text(value),
-          );
-        }).toList(),
-        onChanged: (newValue) {
-          setState(() {
-            selectedStatus = newValue!;
-          });
-        },
-      ),
-    );
+    return Obx(() => DropdownButtonFormField<String>(
+      value: controller.status.value,
+      decoration: _dropdownDecoration(Icons.check_circle_outline),
+      items: ["1", "0"].map((String value) {
+        return DropdownMenuItem<String>(
+          value: value,
+          child: Text(value),
+        );
+      }).toList(),
+      onChanged: (value) => controller.status.value = value!,
+      validator: (value) => value == null ? 'Please select status' : null,
+    ));
   }
 
   Widget _buildRoleDropdown() {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 5,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: DropdownButtonFormField<String>(
-        value: selectedRole,
-        decoration: InputDecoration(
-          filled: true,
-          fillColor: Colors.grey[200],
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(
-              color: AppColors.orangeShade,
-              width: 1.5,
-            ),
-          ),
-          prefixIcon: Icon(Icons.group, color: Colors.grey[600]),
-          contentPadding: EdgeInsets.symmetric(horizontal: 15, vertical: 2),
-        ),
-        dropdownColor: Colors.grey[200],
-        style: TextStyle(fontSize: 16, color: Colors.black87),
-        items: ["0", "1"].map((String value) {
-          return DropdownMenuItem<String>(
-            value: value,
-            child: Text(value),
-          );
-        }).toList(),
-        onChanged: (newValue) {
-          setState(() {
-            selectedRole = newValue!;
-          });
-        },
-      ),
-    );
-  }
-
-  Widget _buildRegisterButton() {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: () {
-          // Handle registration logic here
-          Get.to(LoginScreen());
-        },
-        child: Container(
-          height: 50,
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: AppColors.blackColor,
-            borderRadius: BorderRadius.circular(15),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppColors.orangeShade,
-                AppColors.orangeShade,
-              ],
-            ),
-          ),
-          child: Center(
-            child: CustomText(
-              text: "Register",
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppColors.whiteTheme,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLoginPrompt(double height, double width) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text("Already have an account!"),
-        SizedBox(width: width * 0.020),
-        InkWell(
-          onTap: () {
-            Get.to(LoginScreen());
-          },
-          child: Text(
-            "Login",
-            style: TextStyle(
-              color: AppColors.orangeShade,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
+    return Obx(() => DropdownButtonFormField<String>(
+      value: controller.role.value,
+      decoration: _dropdownDecoration(Icons.group),
+      items: [
+        DropdownMenuItem(value: "0", child: Text("0")),
+        DropdownMenuItem(value: "1", child: Text("1")),
       ],
+      onChanged: (value) => controller.role.value = value!,
+      validator: (value) => value == null ? 'Please select role' : null,
+    ));
+  }
+
+  InputDecoration _dropdownDecoration(IconData icon) {
+    return InputDecoration(
+      filled: true,
+      fillColor: Colors.grey[100],
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(
+          color: AppColors.orangeShade,
+          width: 1.5,
+        ),
+      ),
+      prefixIcon: Icon(icon, color: Colors.grey[600]),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 2),
     );
   }
 }
