@@ -40,7 +40,7 @@ class HomeScreen extends StatelessWidget {
                         context,
                         MaterialPageRoute(
                           builder: (context) =>
-                              MainEmployeeAttendancePage(),
+                              EmployeeAttendanceScreen(),
                         ),
                       ),
                     ),

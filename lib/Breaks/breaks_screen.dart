@@ -55,13 +55,19 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
     await prefs.setInt('mealElapsedSeconds', mealElapsedSeconds);
 
     if (quickBreakStart != null) {
-      await prefs.setString('quickBreakStart', quickBreakStart!.toIso8601String());
+      await prefs.setString(
+        'quickBreakStart',
+        quickBreakStart!.toIso8601String(),
+      );
     } else {
       await prefs.remove('quickBreakStart');
     }
 
     if (mealBreakStart != null) {
-      await prefs.setString('mealBreakStart', mealBreakStart!.toIso8601String());
+      await prefs.setString(
+        'mealBreakStart',
+        mealBreakStart!.toIso8601String(),
+      );
     } else {
       await prefs.remove('mealBreakStart');
     }
@@ -114,7 +120,11 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
     });
     startQuickTimer();
     saveBreakStatus();
-    Get.snackbar("Quick Break", "Quick break started", backgroundColor: AppColors.orangeShade);
+    Get.snackbar(
+      "Quick Break",
+      "Quick break started",
+      backgroundColor: AppColors.orangeShade,
+    );
   }
 
   void endQuickBreak() {
@@ -126,16 +136,23 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
           'type': 'Quick Break',
           'start': quickBreakStart.toString(),
           'end': endTime.toString(),
-          'duration': duration
+          'duration': duration,
         });
-        breakRecords.sort((a, b) => DateTime.parse(b['start']).compareTo(DateTime.parse(a['start'])));
+        breakRecords.sort(
+          (a, b) =>
+              DateTime.parse(b['start']).compareTo(DateTime.parse(a['start'])),
+        );
         isQuickBreak = false;
         quickBreakStart = null;
         _quickTimer?.cancel();
       });
       saveBreakRecords();
       saveBreakStatus();
-      Get.snackbar("Quick break ended", "Duration: ${formatFullTime(duration)}", backgroundColor: AppColors.redColor);
+      Get.snackbar(
+        "Quick break ended",
+        "Duration: ${formatFullTime(duration)}",
+        backgroundColor: AppColors.redColor,
+      );
     }
   }
 
@@ -147,7 +164,11 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
     });
     startMealTimer();
     saveBreakStatus();
-    Get.snackbar("Meal Break", "Meal break started", backgroundColor: AppColors.orangeShade);
+    Get.snackbar(
+      "Meal Break",
+      "Meal break started",
+      backgroundColor: AppColors.orangeShade,
+    );
   }
 
   void endMealBreak() {
@@ -159,16 +180,23 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
           'type': 'Meal Break',
           'start': mealBreakStart.toString(),
           'end': endTime.toString(),
-          'duration': duration
+          'duration': duration,
         });
-        breakRecords.sort((a, b) => DateTime.parse(b['start']).compareTo(DateTime.parse(a['start'])));
+        breakRecords.sort(
+          (a, b) =>
+              DateTime.parse(b['start']).compareTo(DateTime.parse(a['start'])),
+        );
         isMealBreak = false;
         mealBreakStart = null;
         _mealTimer?.cancel();
       });
       saveBreakRecords();
       saveBreakStatus();
-      Get.snackbar("Meal break ended", "Duration: ${formatFullTime(duration)}", backgroundColor: AppColors.redColor);
+      Get.snackbar(
+        "Meal break ended",
+        "Duration: ${formatFullTime(duration)}",
+        backgroundColor: AppColors.redColor,
+      );
     }
   }
 
@@ -202,7 +230,9 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
   }
 
   int get activeBreakSeconds {
-    return selectedBreakType == 'Quick Break' ? quickElapsedSeconds : mealElapsedSeconds;
+    return selectedBreakType == 'Quick Break'
+        ? quickElapsedSeconds
+        : mealElapsedSeconds;
   }
 
   double get activeBreakPercent {
@@ -215,11 +245,11 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
     final now = DateTime.now();
     return breakRecords
         .where((record) {
-      final date = DateTime.parse(record['start']);
-      return date.year == now.year &&
-          date.month == now.month &&
-          date.day == now.day;
-    })
+          final date = DateTime.parse(record['start']);
+          return date.year == now.year &&
+              date.month == now.month &&
+              date.day == now.day;
+        })
         .fold(0, (sum, record) => sum + (record['duration'] as int));
   }
 
@@ -227,9 +257,9 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
     final now = DateTime.now();
     return breakRecords
         .where((record) {
-      final date = DateTime.parse(record['start']);
-      return date.year == now.year && date.month == now.month;
-    })
+          final date = DateTime.parse(record['start']);
+          return date.year == now.year && date.month == now.month;
+        })
         .fold(0, (sum, record) => sum + (record['duration'] as int));
   }
 
@@ -242,7 +272,8 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isBreakActive = (selectedBreakType == 'Quick Break' && isQuickBreak) ||
+    final isBreakActive =
+        (selectedBreakType == 'Quick Break' && isQuickBreak) ||
         (selectedBreakType == 'Meal Break' && isMealBreak);
 
     return Scaffold(
@@ -269,21 +300,52 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text("Break Summary", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold,color: AppColors.whiteTheme)),
+                          const Text(
+                            "Break Summary",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.whiteTheme,
+                            ),
+                          ),
                           const SizedBox(height: 12),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text("Today's Total:", style: TextStyle(fontSize: 16,color: AppColors.whiteTheme)),
-                              Text(formatFullTime(dailyBreakSeconds), style: const TextStyle(fontWeight: FontWeight.bold,color: AppColors.whiteTheme)),
+                              const Text(
+                                "Today's Total:",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: AppColors.whiteTheme,
+                                ),
+                              ),
+                              Text(
+                                formatFullTime(dailyBreakSeconds),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.whiteTheme,
+                                ),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 8),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text("This Month's Total:", style: TextStyle(fontSize: 16,color: AppColors.whiteTheme)),
-                              Text(formatFullTime(monthlyBreakSeconds), style: const TextStyle(fontWeight: FontWeight.bold,color: AppColors.whiteTheme)),
+                              const Text(
+                                "This Month's Total:",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: AppColors.whiteTheme,
+                                ),
+                              ),
+                              Text(
+                                formatFullTime(monthlyBreakSeconds),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.whiteTheme,
+                                ),
+                              ),
                             ],
                           ),
                         ],
@@ -293,28 +355,42 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
                   const SizedBox(height: 4),
                   Card(
                     elevation: 4,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 8.0,
+                      ),
                       child: DropdownButton<String>(
                         value: selectedBreakType,
                         isExpanded: true,
                         underline: const SizedBox(),
-                        items: ['Quick Break', 'Meal Break'].map((String value) {
-                          return DropdownMenuItem<String>(value: value, child: Text(value));
-                        }).toList(),
-                        onChanged: isBreakActive ? null : (String? newValue) {
-                          setState(() {
-                            selectedBreakType = newValue!;
-                          });
-                        },
+                        items:
+                            ['Quick Break', 'Meal Break'].map((String value) {
+                              return DropdownMenuItem<String>(
+                                value: value,
+                                child: Text(value),
+                              );
+                            }).toList(),
+                        onChanged:
+                            isBreakActive
+                                ? null
+                                : (String? newValue) {
+                                  setState(() {
+                                    selectedBreakType = newValue!;
+                                  });
+                                },
                       ),
                     ),
                   ),
                   const SizedBox(height: 4),
                   Card(
                     elevation: 4,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Column(
@@ -322,8 +398,20 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(selectedBreakType, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                              Text(formatTime(activeBreakSeconds), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                              Text(
+                                selectedBreakType,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                formatTime(activeBreakSeconds),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 5),
@@ -332,10 +420,12 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
                             child: LinearProgressIndicator(
                               value: activeBreakPercent,
                               backgroundColor: Colors.grey[200],
-                              color: (isQuickBreak && activeBreakSeconds > 600) ||
-                                  (isMealBreak && activeBreakSeconds > 3600)
-                                  ? Colors.red
-                                  : AppColors.appColor,
+                              color:
+                                  (isQuickBreak && activeBreakSeconds > 600) ||
+                                          (isMealBreak &&
+                                              activeBreakSeconds > 3600)
+                                      ? Colors.red
+                                      : AppColors.appColor,
                               minHeight: 10,
                             ),
                           ),
@@ -345,13 +435,23 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
                             child: ElevatedButton(
                               onPressed: isBreakActive ? endBreak : startBreak,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: isBreakActive ? AppColors.redColor : AppColors.appColor,
-                                padding: const EdgeInsets.symmetric(vertical: 12),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                backgroundColor:
+                                    isBreakActive
+                                        ? AppColors.redColor
+                                        : AppColors.appColor,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
                               ),
                               child: Text(
                                 isBreakActive ? "STOP BREAK" : "START BREAK",
-                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ),
@@ -366,30 +466,53 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Text(
                 "Break History",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.appColor),
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.appColor,
+                ),
               ),
             ),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: breakRecords.isEmpty
-                  ? const Center(child: Text("No break records yet"))
-                  : ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: breakRecords.length,
-                itemBuilder: (context, index) {
-                  final record = breakRecords[index];
-                  return Card(
-                    color: AppColors.appColor,
-                    child: ListTile(
-                      title: Text(record['type'],style: TextStyle(fontWeight: FontWeight.bold,color: AppColors.whiteTheme),),
-                      subtitle: Text("Start: ${record['start']}\nEnd: ${record['end']}",style: TextStyle(fontSize: 16,color: AppColors.whiteTheme),),
-                      trailing: Text(formatTime(record['duration']),style: TextStyle(fontWeight: FontWeight.bold,color: AppColors.whiteTheme),),
-                    ),
-                  );
-                },
-              ),
+              child:
+                  breakRecords.isEmpty
+                      ? const Center(child: Text("No break records yet"))
+                      : ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: breakRecords.length,
+                        itemBuilder: (context, index) {
+                          final record = breakRecords[index];
+                          return Card(
+                            color: AppColors.appColor,
+                            child: ListTile(
+                              title: Text(
+                                record['type'],
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.whiteTheme,
+                                ),
+                              ),
+                              subtitle: Text(
+                                "Start: ${record['start']}\nEnd: ${record['end']}",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: AppColors.whiteTheme,
+                                ),
+                              ),
+                              trailing: Text(
+                                formatTime(record['duration']),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.whiteTheme,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
             ),
             // ... break history UI remains unchanged
           ],

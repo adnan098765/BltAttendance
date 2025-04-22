@@ -14,19 +14,19 @@ class BottomNavScreen extends StatefulWidget {
 }
 
 class _BottomNavScreenState extends State<BottomNavScreen> {
-  int _selectedIndex = 2; // Default to Home screen
+  int _selectedIndex = 2;
 
   final List<Widget> _screens = [
     const LeaveScreen(),
     const BreakTrackerScreen(),
     const HomeScreen(),
-    const TimetableScreen(),
+    // const TimetableScreen(),
     const ProfileScreen(),
   ];
 
   void _onItemSelected(int index) {
     setState(() {
-      _selectedIndex = index; // Allow navigation to any screen
+      _selectedIndex = index;
     });
   }
 
@@ -53,10 +53,10 @@ class _BottomNavScreenState extends State<BottomNavScreen> {
             icon: Icon(Icons.home),
             label: 'Home',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.schedule),
-            label: 'TimeTable',
-          ),
+          // BottomNavigationBarItem(
+          //   icon: Icon(Icons.schedule),
+          //   label: 'TimeTable',
+          // ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
             label: 'Profile',

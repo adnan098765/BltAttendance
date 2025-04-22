@@ -6,7 +6,7 @@ import 'package:intl/intl.dart';
 class Employee {
   String name;
   bool isPresent;
-  Map<String, bool> attendanceLog;
+  Map<String, bool> attendanceLog; // key: date, value: present or not
 
   Employee({required this.name, this.isPresent = false, Map<String, bool>? attendanceLog})
       : attendanceLog = attendanceLog ?? {};
@@ -42,7 +42,7 @@ class EmployeeData {
     await prefs.setString('employee_data', encoded);
   }
 
-    static void addEmployee(Employee employee) {
+  static void addEmployee(Employee employee) {
     employeeList.add(employee);
     saveData();
   }
