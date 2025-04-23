@@ -61,7 +61,7 @@ dependencies:
   flutter_svg: ^2.0.17
   shared_preferences: ^2.5.3
   splash_master: ^0.0.2
-
+  permission_handler: ^12.0.0+1
 dev_dependencies:
   flutter_test:
     sdk: flutter

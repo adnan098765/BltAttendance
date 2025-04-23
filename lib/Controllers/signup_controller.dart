@@ -1,13 +1,18 @@
+import 'dart:convert';
+import 'dart:developer';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 
+import '../BottonNavScreen/bottom_nav_screen.dart';
+import '../Models/signup_model.dart';
+
+import '../Widgets/snack_bar.dart';
+
+// Combined controller that includes the login functionality
 class SignupController extends GetxController {
-  // Form key
   final formKey = GlobalKey<FormState>();
 
-  // Text Editing Controllers
   final fullName = TextEditingController();
   final fatherName = TextEditingController();
   final phoneNumber = TextEditingController();
@@ -19,109 +24,172 @@ class SignupController extends GetxController {
   final confirmPassword = TextEditingController();
   final registrationDate = TextEditingController();
 
-  // Observable fields
-  var gender = ''.obs;
-  var status = ''.obs;
-  var role = ''.obs;
-  var isLoading = false.obs;
+  var gender = "M".obs;
+  var status = "".obs;
+  var role = "".obs;
   var showPassword = false.obs;
   var showConfirmPassword = false.obs;
-
-  // Validators
+  var isLoading = false.obs;
   String? validatePhone(String? value) {
-    if (value == null || value.isEmpty) return 'Phone is required';
-    if (!RegExp(r'^[0-9]{11}$').hasMatch(value)) return 'Enter valid 11-digit number';
+    if (value == null || value.isEmpty) {
+      return 'Required field';
+    }
+    if (!RegExp(r'^\d{11}$').hasMatch(value)) {
+      return 'Please enter valid phone number';
+    }
     return null;
   }
 
   String? validateCNIC(String? value) {
-    if (value == null || value.isEmpty) return 'CNIC is required';
-    if (!RegExp(r'^[0-9]{13}$').hasMatch(value)) return 'Enter valid 13-digit CNIC';
+    if (value == null || value.isEmpty) {
+      return 'Required field';
+    }
+    if (!RegExp(r'^\d{13}$').hasMatch(value)) {
+      return 'Please enter a valid 13-digit CNIC';
+    }
     return null;
   }
 
   String? validateEmail(String? value) {
-    if (value == null || value.isEmpty) return 'Email is required';
-    if (!GetUtils.isEmail(value)) return 'Enter a valid email';
+    if (value == null || value.isEmpty) {
+      return 'Required field';
+    }
+    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+      return 'Please enter a valid email';
+    }
     return null;
   }
 
   String? validatePassword(String? value) {
-    if (value == null || value.isEmpty) return 'Password is required';
-    if (value.length < 6) return 'Password must be at least 6 characters';
+    if (value == null || value.isEmpty) {
+      return 'Required field';
+    }
+    if (value.length < 6) {
+      return 'Password should be at least 6 characters';
+    }
     return null;
   }
 
   String? validateConfirmPassword(String? value) {
-    if (value == null || value.isEmpty) return 'Confirm your password';
-    if (value != password.text) return 'Passwords do not match';
+    if (value == null || value.isEmpty) {
+      return 'Required field';
+    }
+    if (value != password.text) {
+      return 'Passwords do not match';
+    }
     return null;
   }
 
+  // Updated registerUser method in SignupController
   void registerUser() async {
-    if (!formKey.currentState!.validate()) return;
+    if (formKey.currentState!.validate()) {
+      try {
+        // Convert string status/role to int
+        int statusValue = int.parse(status.value);
+        int roleValue = int.parse(role.value);
 
-    isLoading.value = true;
-
-    final Map<String, dynamic> payload = {
-      "fullName": fullName.text.trim(),
-      "fatherName": fatherName.text.trim(),
-      "gender": gender.value,
-      "phoneNumber": phoneNumber.text.trim(),
-      "cnic": cnic.text.trim(),
-      "email": email.text.trim(),
-      "address": address.text.trim(),
-      "userName": userName.text.trim(),
-      "password": password.text.trim(),
-      "registrationDate": registrationDate.text.trim(),
-      "status": int.tryParse(status.value) ?? 0,
-      "role": int.tryParse(role.value) ?? 0
-    };
-
-    try {
-      final response = await http.post(
-        Uri.parse('https://your-api-endpoint.com/api/register'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode(payload),
-      );
-
-      isLoading.value = false;
-
-      if (response.statusCode == 200) {
-        Get.snackbar("Success", "User registered successfully");
-        // Optionally clear the form or navigate to another page
-      } else {
-        final errorResponse = json.decode(response.body);
-        Get.snackbar(
-            "Error",
-            "Registration failed: ${errorResponse['message'] ?? 'Unknown error'}",
-            backgroundColor: Colors.redAccent,
-            colorText: Colors.white
+        await loginUser(
+          fullName.text,
+          fatherName.text,
+          gender.value,
+          phoneNumber.text,
+          cnic.text,
+          email.text,
+          address.text,
+          userName.text,
+          password.text,
+          registrationDate.text,
+          statusValue,
+          roleValue,
         );
+      } catch (e) {
+        log('Registration error: $e');
+        // Errors will be handled in loginUser method
       }
-    } catch (e) {
-      isLoading.value = false;
-      Get.snackbar(
-          "Error",
-          "Network error: ${e.toString()}",
-          backgroundColor: Colors.redAccent,
-          colorText: Colors.white
-      );
     }
   }
 
-  @override
-  void onClose() {
-    fullName.dispose();
-    fatherName.dispose();
-    phoneNumber.dispose();
-    cnic.dispose();
-    email.dispose();
-    address.dispose();
-    userName.dispose();
-    password.dispose();
-    confirmPassword.dispose();
-    registrationDate.dispose();
-    super.onClose();
+  Future loginUser(
+    String name,
+    String fatherName,
+    String gender,
+    String mobile,
+    String cnic,
+    String email,
+    String address,
+    String username,
+    String password,
+    String redDate,
+    int status,
+    int role,
+  ) async {
+    isLoading(true);
+    try {
+      log('Attempting to register: $username');
+
+      final response = await http.post(
+        Uri.parse('http://crolahore.azurewebsites.net/api/Master/SaveLpUsers'),
+        body: {
+          'Name': name,
+          'FatherName': fatherName,
+          'Gender': gender,
+          'Mobile': mobile,
+          'CNIC': cnic,
+          'Email': email,
+          'Address': address,
+          'UserName': username,
+          'Password': password,
+          'RegDate': redDate,
+          "Status": status.toString(),
+          'Role': role.toString(),
+        },
+      );
+
+      log('API Response: ${response.statusCode}');
+      log('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        var responseData = jsonDecode(response.body);
+        log('Response data: $responseData');
+
+        if (responseData['Status'] == 1) {
+          // Success case
+          Snackbar.snackBar('LineUp', 'Registration Successful!');
+          Get.offAll(() => BottomNavScreen());
+          return SignUpModel.fromJson(responseData);
+        } else {
+          // Handle specific error messages from server
+          String errorMessage =
+              responseData['Message'] ?? 'Registration failed';
+
+          // Provide user-friendly messages for known errors
+          if (errorMessage.contains("UK_LpUsers_Mobile")) {
+            errorMessage = 'This mobile number is already registered';
+          } else if (errorMessage.contains("UK_LpUsers_Email")) {
+            errorMessage = 'This email address is already registered';
+          } else if (errorMessage.contains("UK_LpUsers_UserName")) {
+            errorMessage = 'This username is already taken';
+          }
+
+          Snackbar.snackBar('Registration Error', errorMessage);
+          return null;
+        }
+      } else {
+        Snackbar.snackBar(
+          'Error',
+          'Registration failed with status ${response.statusCode}',
+        );
+        return null;
+      }
+    } catch (e) {
+      log('Error during registration: $e');
+      Snackbar.snackBar(
+        'Error',
+        'An error occurred during registration. Please try again.',
+      );
+      return null;
+    } finally {
+      isLoading(false);
+    }
   }
 }

@@ -1,14 +1,14 @@
+
+
 import 'package:attendance/Auth/forget_password.dart';
 import 'package:attendance/Auth/signup.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import '../BottonNavScreen/bottom_nav_screen.dart';
-import '../BreakTracker/break_tracker_screen.dart';
 import '../Widgets/text_widget.dart';
 import '../AppColors/app_colors.dart';
 import '../Widgets/custom_text_field.dart';
-
+import '../controllers/login_controller.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -20,7 +20,9 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController userController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final LoginController loginController = Get.put(LoginController());
 
+  bool _buttonPressed = false;
 
   @override
   Widget build(BuildContext context) {
@@ -57,75 +59,88 @@ class _LoginScreenState extends State<LoginScreen> {
                   obscureText: true,
                 ),
                 SizedBox(height: height * 0.025),
-                MouseRegion(
-                  cursor: SystemMouseCursors.click,
-                  child: GestureDetector(
-                    onTapDown: (_) => setState(() => _buttonPressed = true),
-                    onTapUp: (_) => setState(() => _buttonPressed = false),
-                    onTapCancel: () => setState(() => _buttonPressed = false),
-                    onTap: () {
-                      Get.to(BottomNavScreen());
-                    },
-                    child: AnimatedContainer(
-                      duration: Duration(milliseconds: 100),
-                      height: height * 0.06,
-                      width: width,
-                      decoration: BoxDecoration(
-                        color: AppColors.blackColor,
-                        borderRadius: BorderRadius.circular(15),
-                        boxShadow:
-                        _buttonPressed
-                            ? []
-                            : [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 10,
-                            offset: Offset(0, 5),
-                          ),
+                Obx(() => GestureDetector(
+                  onTapDown: (_) => setState(() => _buttonPressed = true),
+                  onTapUp: (_) => setState(() => _buttonPressed = false),
+                  onTapCancel: () => setState(() => _buttonPressed = false),
+                  onTap: () {
+                    if (!loginController.isLoading.value) {
+                      loginController.loginUser(
+                        userController.text.trim(), // Username
+                        // passwordController.text.trim(), // Password
+                      );
+                    }
+                  },
+                  child: AnimatedContainer(
+                    duration: Duration(milliseconds: 100),
+                    height: height * 0.06,
+                    width: width,
+                    decoration: BoxDecoration(
+                      color: AppColors.blackColor,
+                      borderRadius: BorderRadius.circular(15),
+                      boxShadow: _buttonPressed
+                          ? []
+                          : [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 10,
+                          offset: Offset(0, 5),
+                        ),
+                      ],
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          AppColors.orangeShade,
+                          AppColors.orangeShade,
                         ],
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            AppColors.orangeShade,
-                            AppColors.orangeShade,
-                          ],
-                        ),
                       ),
-                      child: Center(
-                        child: CustomText(
-                          text: "Login",
-                          fontSize: 18,
+                    ),
+                    child: Center(
+                      child: loginController.isLoading.value
+                          ? CircularProgressIndicator(color: Colors.white)
+                          : CustomText(
+                        text: "Login",
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.whiteTheme,
+                      ),
+                    ),
+                  ),
+                )),                SizedBox(height: height * 0.010),
+                Align(
+                  alignment: Alignment(0.9, 5),
+                  child: InkWell(
+                    onTap: () {
+                      Get.to(ForgotPasswordScreen());
+                    },
+                    child: Text(
+                      "Forget Password",
+                      style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: AppColors.whiteTheme,
-                        ),
-                      ),
+                          color: AppColors.appColor),
                     ),
                   ),
                 ),
                 SizedBox(height: height * 0.010),
-               Align(
-                   alignment: Alignment(0.9, 5),
-                   child: InkWell(
-                     onTap: (){
-                      Get.to(ForgotPasswordScreen());
-                     },
-                       child: Text("Forget Password",style: TextStyle(fontWeight: FontWeight.bold,color: AppColors.appColor),))),
-                SizedBox(height: height * 0.010),
-
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text("Don't have an account"),
-                    SizedBox(width: width*0.020,),
+                    SizedBox(width: width * 0.020),
                     InkWell(
-                      onTap: (){
+                      onTap: () {
                         Get.to(SignupScreen());
                       },
-                        child: Text("Signup",style: TextStyle(color: AppColors.orangeShade,fontWeight: FontWeight.bold),))
+                      child: Text(
+                        "Signup",
+                        style: TextStyle(
+                            color: AppColors.orangeShade,
+                            fontWeight: FontWeight.bold),
+                      ),
+                    ),
                   ],
                 ),
-
                 SizedBox(height: height * 0.04),
               ],
             ),
@@ -134,6 +149,4 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
-
-  bool _buttonPressed = false;
 }

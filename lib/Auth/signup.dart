@@ -100,6 +100,7 @@ class SignupScreen extends StatelessWidget {
                 hintText: "Username",
                 prefixIcon: Icons.person_outline,
                 validator: (value) => value?.isEmpty ?? true ? 'Required field' : null,
+
               ),
               const SizedBox(height: 15),
 
@@ -115,7 +116,7 @@ class SignupScreen extends StatelessWidget {
               )),
               const SizedBox(height: 15),
 
-// Confirm Password Field
+              // Confirm Password Field
               Obx(() => CustomTextField(
                 controller: controller.confirmPassword,
                 hintText: "Confirm Password",
@@ -126,8 +127,6 @@ class SignupScreen extends StatelessWidget {
                 onSuffixIconPressed: () => controller.showConfirmPassword.toggle(),
               )),
               const SizedBox(height: 15),
-
-              // Registration Date
               _buildRegistrationDateField(),
               const SizedBox(height: 15),
 
@@ -204,8 +203,9 @@ class SignupScreen extends StatelessWidget {
     return TextFormField(
       controller: controller.registrationDate,
       readOnly: true,
-
-      decoration: _dropdownDecoration(Icons.calendar_today),
+      decoration: _dropdownDecoration(Icons.calendar_today).copyWith(
+        hintText: "Joining Date",hintStyle: TextStyle(color: Colors.grey[600]),
+      ),
       onTap: () async {
         final DateTime? pickedDate = await showDatePicker(
           context: Get.context!,
@@ -224,14 +224,19 @@ class SignupScreen extends StatelessWidget {
 
   Widget _buildStatusDropdown() {
     return Obx(() => DropdownButtonFormField<String>(
-      value: controller.status.value,
+      value: controller.status.value.isEmpty ? null : controller.status.value,
       decoration: _dropdownDecoration(Icons.check_circle_outline),
-      items: ["1", "0"].map((String value) {
-        return DropdownMenuItem<String>(
-          value: value,
-          child: Text(value),
-        );
-      }).toList(),
+      items: [
+        DropdownMenuItem(
+          value: "1",  // API expects "1" for Active
+          child: Text("1"),
+        ),
+        DropdownMenuItem(
+          value: "0",  // API expects "0" for Inactive
+          child: Text("0"),
+        ),
+      ],
+      hint: Text("Select Status"),
       onChanged: (value) => controller.status.value = value!,
       validator: (value) => value == null ? 'Please select status' : null,
     ));
@@ -239,12 +244,19 @@ class SignupScreen extends StatelessWidget {
 
   Widget _buildRoleDropdown() {
     return Obx(() => DropdownButtonFormField<String>(
-      value: controller.role.value,
+      value: controller.role.value.isEmpty ? null : controller.role.value,
       decoration: _dropdownDecoration(Icons.group),
       items: [
-        DropdownMenuItem(value: "0", child: Text("0")),
-        DropdownMenuItem(value: "1", child: Text("1")),
+        DropdownMenuItem(
+          value: "0",  // API expects "0" for Regular User
+          child: Text("0"),
+        ),
+        DropdownMenuItem(
+          value: "1",  // API expects "1" for Admin
+          child: Text("1"),
+        ),
       ],
+      hint: Text("Select Role"),
       onChanged: (value) => controller.role.value = value!,
       validator: (value) => value == null ? 'Please select role' : null,
     ));
