@@ -1,14 +1,14 @@
 
-
-import 'package:attendance/Auth/forget_password.dart';
-import 'package:attendance/Auth/signup.dart';
+import 'package:attendance/Screens/Auth/signup.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../AppColors/app_colors.dart';
+import '../../Controllers/login_controller.dart';
+import '../../Widgets/custom_text_field.dart';
+import '../../Widgets/text_widget.dart';
 import '../BottonNavScreen/bottom_nav_screen.dart';
-import '../Widgets/text_widget.dart';
-import '../AppColors/app_colors.dart';
-import '../Widgets/custom_text_field.dart';
-import '../controllers/login_controller.dart';
+import 'forget_password.dart';
+
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

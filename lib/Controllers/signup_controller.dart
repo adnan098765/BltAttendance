@@ -4,9 +4,9 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../BottonNavScreen/bottom_nav_screen.dart';
 import '../Models/signup_model.dart';
 
+import '../Screens/BottonNavScreen/bottom_nav_screen.dart';
 import '../Widgets/snack_bar.dart';
 
 // Combined controller that includes the login functionality

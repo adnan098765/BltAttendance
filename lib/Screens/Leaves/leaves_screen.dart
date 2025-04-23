@@ -5,8 +5,9 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../AppColors/app_colors.dart';
-import '../Widgets/text_widget.dart';
+import '../../AppColors/app_colors.dart';
+import '../../Widgets/text_widget.dart';
+
 
 class LeaveScreen extends StatefulWidget {
   const LeaveScreen({super.key});

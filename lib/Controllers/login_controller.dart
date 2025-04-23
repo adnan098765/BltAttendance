@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'dart:developer';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
-import '../BottonNavScreen/bottom_nav_screen.dart';
 import '../Models/login_controller.dart';
+import '../Screens/BottonNavScreen/bottom_nav_screen.dart';
 import '../Widgets/snack_bar.dart';
 
 class LoginController extends GetxController {

@@ -62,7 +62,7 @@ class CustomTextField extends StatefulWidget {
     this.contentPadding,
     this.hintStyle,
     this.style,
-    this.obscuringCharacter = '•',
+    this.obscuringCharacter = '*',
     this.enableInteractiveSelection = true,
     this.textCapitalization = TextCapitalization.none,
     this.prefixIconSize,
@@ -103,6 +103,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
       )
           : null,
       child: TextFormField(
+
         controller: widget.controller,
         keyboardType: widget.keyboardType,
         obscureText: widget.obscureText && !_showPassword,

@@ -1,5 +1,5 @@
 import 'package:attendance/AppColors/app_colors.dart';
-import 'package:attendance/Profile/profile_details_screen.dart';
+import 'package:attendance/Screens/Profile/profile_details_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';

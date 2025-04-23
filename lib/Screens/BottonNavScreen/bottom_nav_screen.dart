@@ -1,9 +1,9 @@
-import 'package:attendance/Breaks/breaks_screen.dart';
-import 'package:attendance/Leaves/leaves_screen.dart';
-import 'package:attendance/TimeTable/time_table_screen.dart';
+
 import 'package:flutter/material.dart';
 
+import '../Breaks/breaks_screen.dart';
 import '../Home/home_screen.dart';
+import '../Leaves/leaves_screen.dart';
 import '../Profile/profile_screen.dart';
 
 class BottomNavScreen extends StatefulWidget {

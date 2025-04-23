@@ -1,9 +1,9 @@
 import 'package:attendance/AppColors/app_colors.dart';
-import 'package:attendance/Auth/new_password_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../Widgets/custom_text_field.dart';
+import '../../Widgets/custom_text_field.dart';
+import 'new_password_screen.dart';
 
 class ForgotPasswordScreen extends StatelessWidget {
   final _formKey = GlobalKey<FormState>();

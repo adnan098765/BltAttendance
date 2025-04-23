@@ -1,7 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import '../AppColors/app_colors.dart';
+import '../../AppColors/app_colors.dart';
+
 
 class CustomDropdown extends StatelessWidget {
   final String value;

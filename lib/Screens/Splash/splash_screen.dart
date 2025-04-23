@@ -1,6 +1,7 @@
 import 'package:attendance/AppColors/app_colors.dart';
-import 'package:attendance/Auth/signup.dart';
 import 'package:flutter/material.dart';
+
+import '../Auth/signup.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -64,7 +65,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             child: ScaleTransition(
               scale: _animation,
               child: Image.asset(
-                'assets/images/img.png',
+                'assets/images/applogo.jpeg',
                 width: width,
                 height: height*0.600,
               ),

@@ -1,8 +1,9 @@
-import 'package:attendance/Auth/login_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:attendance/AppColors/app_colors.dart';
 import 'package:attendance/Widgets/text_widget.dart';
+
+import 'login_screen.dart';
 
 class ChangePasswordScreen extends StatelessWidget {
   final _formKey = GlobalKey<FormState>();

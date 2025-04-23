@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:attendance/Auth/login_screen.dart';
-import '../AppColors/app_colors.dart';
-import '../Controllers/signup_controller.dart';
-import '../Widgets/custom_text_field.dart';
-import '../Widgets/text_widget.dart';
+
+import '../../AppColors/app_colors.dart';
+import '../../Controllers/signup_controller.dart';
+import '../../Widgets/custom_text_field.dart';
+import '../../Widgets/text_widget.dart';
+import 'login_screen.dart';
+
 
 class SignupScreen extends StatelessWidget {
   SignupScreen({super.key});
@@ -140,13 +142,17 @@ class SignupScreen extends StatelessWidget {
 
               Obx(() => ElevatedButton(
                 onPressed: controller.isLoading.value ? null : controller.registerUser,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.orangeShade,
-                  minimumSize: const Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                style: ButtonStyle(
+                  backgroundColor: MaterialStateProperty.all(AppColors.orangeShade),
+                  foregroundColor: MaterialStateProperty.all(Colors.white),
+                  minimumSize: MaterialStateProperty.all(const Size(double.infinity, 50)),
+                  shape: MaterialStateProperty.all(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 ),
+
                 child: controller.isLoading.value
                     ? const CircularProgressIndicator(color: Colors.white)
                     : const Text(
