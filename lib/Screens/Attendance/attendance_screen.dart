@@ -36,9 +36,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(onPressed: () => Get.back(), icon: const Icon(Icons.arrow_back_ios)),
-        title: const Text('Attendance Summary'),
-        backgroundColor: AppColors.orangeShade,
+        leading: IconButton(onPressed: () => Get.back(), icon: const Icon(Icons.arrow_back_ios,color: AppColors.whiteTheme,)),
+        title: const Text('Attendance Summary',style: TextStyle(color: AppColors.whiteTheme),),
+        backgroundColor: AppColors.appColor,
       ),
       body: Column(
         children: [
@@ -60,7 +60,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             ),
           ),
           const SizedBox(height: 20),
-          const Divider(),
+          // const Divider(),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 8.0),
             child: Text('Employee List', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),

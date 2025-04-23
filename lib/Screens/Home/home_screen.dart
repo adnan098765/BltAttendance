@@ -1,9 +1,8 @@
+import 'package:attendance/AppColors/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import '../Attendance/attendance_screen.dart';
 import '../Employee/employees_screen.dart';
-
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -11,103 +10,115 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Welcome',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF3A7BD5), Color(0xFF00d2ff)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Welcome 👋',
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    letterSpacing: 1.2,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 24),
-              Expanded(
-                child: GridView.count(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 16,
-                  crossAxisSpacing: 16,
-                  children: [
-                    _buildMenuCard(
-                      context,
-                      'Employees',
-                      Icons.people,
-                      Colors.blue,
-                          () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              EmployeeAttendanceScreen(userName: '',),
-                        ),
+                const SizedBox(height: 20),
+                Expanded(
+                  child: GridView.count(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 20,
+                    mainAxisSpacing: 20,
+                    children: [
+                      _buildMenuCard(
+                        title: 'Employees',
+                        icon: Icons.people_alt_rounded,
+                        color: Colors.white,
+                        iconBgColor: Colors.deepPurple,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  EmployeeAttendanceScreen(userName: ''),
+                            ),
+                          );
+                        },
                       ),
-                    ),
-                    _buildMenuCard(
-                      context,
-                      'Attendance',
-                      Icons.calendar_today,
-                      Colors.orange,
-                        (){
-                        Get.to(AttendanceScreen());
-                        }
-                    ),
-                    // _buildMenuCard(
-                    //   context,
-                    //   'Timetable',
-                    //   Icons.schedule,
-                    //   Colors.purple,
-                    //   //     () => Navigator.push(
-                    //   //   context,
-                    //   //   MaterialPageRoute(
-                    //   //     builder: (context) => const TimetableScreen(),
-                    //   //   ),
-                    //   // ),
-                    // ),
-                  ],
+                      _buildMenuCard(
+                        title: 'Attendance',
+                        icon: Icons.calendar_month_rounded,
+                        color: Colors.white,
+                        iconBgColor: Colors.teal,
+                        onTap: () => Get.to(() => AttendanceScreen()),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildMenuCard(
-      BuildContext context,
-      String title,
-      IconData icon,
-      Color color,
-      VoidCallback onTap,
-      ) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
+  Widget _buildMenuCard({
+    required String title,
+    required IconData icon,
+    required Color color,
+    required Color iconBgColor,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Ink(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          color: Colors.white.withOpacity(0.9),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.15),
+              blurRadius: 10,
+              offset: const Offset(4, 4),
+            ),
+          ],
+        ),
+        child: Center(
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                icon,
-                size: 48,
-                color: color,
+              Container(
+                decoration: BoxDecoration(
+                  color: iconBgColor,
+                  shape: BoxShape.circle,
+                ),
+                padding: const EdgeInsets.all(18),
+                child: Icon(
+                  icon,
+                  color: color,
+                  size: 36,
+                ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               Text(
                 title,
                 style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
                 ),
-                textAlign: TextAlign.center,
               ),
             ],
           ),

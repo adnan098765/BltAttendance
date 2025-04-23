@@ -130,9 +130,9 @@ class _LeaveScreenState extends State<LeaveScreen> {
         backgroundColor: AppColors.appColor,
         leading: IconButton(
           onPressed: () => Get.back(),
-          icon: const Icon(Icons.arrow_back_ios),
+          icon: const Icon(Icons.arrow_back_ios,color: AppColors.whiteTheme,),
         ),
-        title: Text('Leave', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+        title: Text('Leave', style: GoogleFonts.poppins(fontWeight: FontWeight.bold,color: AppColors.whiteTheme)),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

@@ -279,7 +279,10 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Break Tracker"),
+        leading: IconButton(onPressed: (){
+          Get.back();
+        }, icon: Icon(Icons.arrow_back_ios,color: AppColors.whiteTheme,)),
+        title: const Text("Break Tracker",style: TextStyle(color: AppColors.whiteTheme),),
         backgroundColor: AppColors.appColor,
       ),
       body: SingleChildScrollView(
