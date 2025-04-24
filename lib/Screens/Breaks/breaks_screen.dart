@@ -97,11 +97,50 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
     if (isMealBreak) startMealTimer();
   }
 
+  bool isWithinAllowedBreakTime() {
+    final now = DateTime.now();
+    final currentHour = now.hour;
+    final currentDay = now.weekday;
+
+    // Monday to Friday (7 PM to 4 AM)
+    if (currentDay >= DateTime.monday && currentDay <= DateTime.friday) {
+      return currentHour >= 19 || currentHour < 4;
+    }
+    // Saturday (11 AM to 6 PM)
+    else if (currentDay == DateTime.saturday) {
+      return currentHour >= 11 && currentHour < 18;
+    }
+    // Sunday - no breaks allowed
+    return false;
+  }
+
   void startBreak() {
+    if (!isWithinAllowedBreakTime()) {
+      Get.snackbar(
+        "Break Not Allowed",
+        currentBreakTimeMessage(),
+        backgroundColor: AppColors.redColor,
+      );
+      return;
+    }
+
     if (selectedBreakType == 'Quick Break') {
       if (!isQuickBreak) startQuickBreak();
     } else {
       if (!isMealBreak) startMealBreak();
+    }
+  }
+
+  String currentBreakTimeMessage() {
+    final now = DateTime.now();
+    final currentDay = now.weekday;
+
+    if (currentDay >= DateTime.monday && currentDay <= DateTime.friday) {
+      return "Breaks only allowed between 7 PM to 4 AM from Monday to Friday";
+    } else if (currentDay == DateTime.saturday) {
+      return "Breaks only allowed between 11 AM to 6 PM on Saturday";
+    } else {
+      return "No breaks allowed on Sunday";
     }
   }
 
@@ -140,7 +179,7 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
           'duration': duration,
         });
         breakRecords.sort(
-          (a, b) =>
+              (a, b) =>
               DateTime.parse(b['start']).compareTo(DateTime.parse(a['start'])),
         );
         isQuickBreak = false;
@@ -184,7 +223,7 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
           'duration': duration,
         });
         breakRecords.sort(
-          (a, b) =>
+              (a, b) =>
               DateTime.parse(b['start']).compareTo(DateTime.parse(a['start'])),
         );
         isMealBreak = false;
@@ -238,19 +277,19 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
 
   double get activeBreakPercent {
     return selectedBreakType == 'Quick Break'
-        ? activeBreakSeconds / 600
-        : activeBreakSeconds / 3600;
+        ? activeBreakSeconds / 600 // 10 minutes = 600 seconds
+        : activeBreakSeconds / 3600; // 1 hour = 3600 seconds
   }
 
   int get dailyBreakSeconds {
     final now = DateTime.now();
     return breakRecords
         .where((record) {
-          final date = DateTime.parse(record['start']);
-          return date.year == now.year &&
-              date.month == now.month &&
-              date.day == now.day;
-        })
+      final date = DateTime.parse(record['start']);
+      return date.year == now.year &&
+          date.month == now.month &&
+          date.day == now.day;
+    })
         .fold(0, (sum, record) => sum + (record['duration'] as int));
   }
 
@@ -258,9 +297,9 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
     final now = DateTime.now();
     return breakRecords
         .where((record) {
-          final date = DateTime.parse(record['start']);
-          return date.year == now.year && date.month == now.month;
-        })
+      final date = DateTime.parse(record['start']);
+      return date.year == now.year && date.month == now.month;
+    })
         .fold(0, (sum, record) => sum + (record['duration'] as int));
   }
 
@@ -275,14 +314,20 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
   Widget build(BuildContext context) {
     final isBreakActive =
         (selectedBreakType == 'Quick Break' && isQuickBreak) ||
-        (selectedBreakType == 'Meal Break' && isMealBreak);
+            (selectedBreakType == 'Meal Break' && isMealBreak);
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(onPressed: (){
-          Get.back();
-        }, icon: Icon(Icons.arrow_back_ios,color: AppColors.whiteTheme,)),
-        title: const Text("Break Tracker",style: TextStyle(color: AppColors.whiteTheme),),
+        leading: IconButton(
+          onPressed: () {
+            Get.back();
+          },
+          icon: Icon(Icons.arrow_back_ios, color: AppColors.whiteTheme),
+        ),
+        title: const Text(
+          "Break Tracker",
+          style: TextStyle(color: AppColors.whiteTheme),
+        ),
         backgroundColor: AppColors.appColor,
       ),
       body: SingleChildScrollView(
@@ -372,20 +417,20 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
                         isExpanded: true,
                         underline: const SizedBox(),
                         items:
-                            ['Quick Break', 'Meal Break'].map((String value) {
-                              return DropdownMenuItem<String>(
-                                value: value,
-                                child: Text(value),
-                              );
-                            }).toList(),
+                        ['Quick Break', 'Meal Break'].map((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(value),
+                          );
+                        }).toList(),
                         onChanged:
-                            isBreakActive
-                                ? null
-                                : (String? newValue) {
-                                  setState(() {
-                                    selectedBreakType = newValue!;
-                                  });
-                                },
+                        isBreakActive
+                            ? null
+                            : (String? newValue) {
+                          setState(() {
+                            selectedBreakType = newValue!;
+                          });
+                        },
                       ),
                     ),
                   ),
@@ -425,11 +470,9 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
                               value: activeBreakPercent,
                               backgroundColor: Colors.grey[200],
                               color:
-                                  (isQuickBreak && activeBreakSeconds > 600) ||
-                                          (isMealBreak &&
-                                              activeBreakSeconds > 3600)
-                                      ? Colors.red
-                                      : AppColors.appColor,
+                              (selectedBreakType == 'Quick Break' && activeBreakSeconds > 600)
+                                  ? Colors.red
+                                  : AppColors.appColor,
                               minHeight: 10,
                             ),
                           ),
@@ -440,9 +483,9 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
                               onPressed: isBreakActive ? endBreak : startBreak,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor:
-                                    isBreakActive
-                                        ? AppColors.redColor
-                                        : AppColors.appColor,
+                                isBreakActive
+                                    ? AppColors.redColor
+                                    : AppColors.appColor,
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 12,
                                 ),
@@ -481,44 +524,43 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child:
-                  breakRecords.isEmpty
-                      ? const Center(child: Text("No break records yet"))
-                      : ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: breakRecords.length,
-                        itemBuilder: (context, index) {
-                          final record = breakRecords[index];
-                          return Card(
-                            color: AppColors.appColor,
-                            child: ListTile(
-                              title: Text(
-                                record['type'],
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.whiteTheme,
-                                ),
-                              ),
-                              subtitle: Text(
-                                "Start: ${record['start']}\nEnd: ${record['end']}",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: AppColors.whiteTheme,
-                                ),
-                              ),
-                              trailing: Text(
-                                formatTime(record['duration']),
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.whiteTheme,
-                                ),
-                              ),
-                            ),
-                          );
-                        },
+              breakRecords.isEmpty
+                  ? const Center(child: Text("No break records yet"))
+                  : ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: breakRecords.length,
+                itemBuilder: (context, index) {
+                  final record = breakRecords[index];
+                  return Card(
+                    color: AppColors.appColor,
+                    child: ListTile(
+                      title: Text(
+                        record['type'],
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.whiteTheme,
+                        ),
                       ),
+                      subtitle: Text(
+                        "Start: ${record['start']}\nEnd: ${record['end']}",
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: AppColors.whiteTheme,
+                        ),
+                      ),
+                      trailing: Text(
+                        formatTime(record['duration']),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.whiteTheme,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
             ),
-            // ... break history UI remains unchanged
           ],
         ),
       ),

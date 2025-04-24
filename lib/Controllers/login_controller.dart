@@ -2,9 +2,10 @@ import 'dart:convert';
 import 'dart:developer';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
-import '../Models/login_controller.dart';
+import '../Models/login_model.dart';
 import '../Screens/BottonNavScreen/bottom_nav_screen.dart';
 import '../Widgets/snack_bar.dart';
+import '../prefs/sharedPreferences.dart';
 
 class LoginController extends GetxController {
   var isLoading = false.obs;
@@ -22,8 +23,9 @@ class LoginController extends GetxController {
         if (responseData.isNotEmpty && responseData[0]['ID'] != null) {
           final String id = responseData[0]['ID'].toString();
           log('ID in login controller: $id');
+          log("Login Id $id");
           // Store ID in SharedPreferences
-          // await getUserId();
+          await getUserId();
 
           Snackbar.snackBar('Line UP', 'Login Successfully!');
           Get.offAll(BottomNavScreen());

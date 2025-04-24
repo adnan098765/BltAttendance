@@ -43,8 +43,6 @@ class SignupScreen extends StatelessWidget {
                 validator: (value) => value?.isEmpty ?? true ? 'Required field' : null,
               ),
               const SizedBox(height: 15),
-
-              // Father Name
               CustomTextField(
                 controller: controller.fatherName,
                 hintText: "Father Name",
