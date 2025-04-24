@@ -1,6 +1,5 @@
 import 'package:attendance/AppColors/app_colors.dart';
 import 'package:flutter/material.dart';
-
 import '../Auth/signup.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -10,26 +9,19 @@ class SplashScreen extends StatefulWidget {
   _SplashScreenState createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
-
   @override
   void initState() {
     super.initState();
-
     _controller = AnimationController(
       vsync: this,
       duration: Duration(seconds: 2),
     );
-
-    _animation = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOut,
-    );
-
+    _animation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
     _controller.forward();
-
     Future.delayed(Duration(seconds: 3), () {
       Navigator.pushReplacement(
         context,
@@ -55,7 +47,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             duration: Duration(seconds: 2),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [AppColors.appColor, AppColors.orangeShade],
+                colors: [AppColors.whiteTheme, AppColors.whiteTheme],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -67,11 +59,10 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               child: Image.asset(
                 'assets/images/applogo.jpeg',
                 width: width,
-                height: height*0.600,
+                height: height * 0.600,
               ),
             ),
           ),
-
         ],
       ),
     );

@@ -24,13 +24,15 @@ class HomeScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Welcome 👋',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    letterSpacing: 1.2,
+                Center(
+                  child: const Text(
+                    'Welcome 👋',
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      letterSpacing: 1.2,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -49,8 +51,9 @@ class HomeScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) =>
-                                  EmployeeAttendanceScreen(userName: ''),
+                              builder:
+                                  (context) =>
+                                      EmployeeAttendanceScreen(userName: ''),
                             ),
                           );
                         },
@@ -105,11 +108,7 @@ class HomeScreen extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
                 padding: const EdgeInsets.all(18),
-                child: Icon(
-                  icon,
-                  color: color,
-                  size: 36,
-                ),
+                child: Icon(icon, color: color, size: 36),
               ),
               const SizedBox(height: 16),
               Text(

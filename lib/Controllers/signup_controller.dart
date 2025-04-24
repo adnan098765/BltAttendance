@@ -3,13 +3,13 @@ import 'dart:developer';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../Models/signup_model.dart';
-
+import '../Models/user_model.dart';
 import '../Screens/BottonNavScreen/bottom_nav_screen.dart';
 import '../Widgets/snack_bar.dart';
 
-// Combined controller that includes the login functionality
 class SignupController extends GetxController {
   final formKey = GlobalKey<FormState>();
 
@@ -30,6 +30,7 @@ class SignupController extends GetxController {
   var showPassword = false.obs;
   var showConfirmPassword = false.obs;
   var isLoading = false.obs;
+
   String? validatePhone(String? value) {
     if (value == null || value.isEmpty) {
       return 'Required field';
@@ -80,7 +81,7 @@ class SignupController extends GetxController {
     return null;
   }
 
-  // Updated registerUser method in SignupController
+  // Main method to register user
   void registerUser() async {
     if (formKey.currentState!.validate()) {
       try {
@@ -104,25 +105,29 @@ class SignupController extends GetxController {
         );
       } catch (e) {
         log('Registration error: $e');
-        // Errors will be handled in loginUser method
+        Snackbar.snackBar(
+          'Error',
+          'An error occurred during registration. Please try again.',
+        );
       }
     }
   }
 
-  Future loginUser(
-    String name,
-    String fatherName,
-    String gender,
-    String mobile,
-    String cnic,
-    String email,
-    String address,
-    String username,
-    String password,
-    String redDate,
-    int status,
-    int role,
-  ) async {
+  // Method to call API and handle response
+  Future<SignUpModel?> loginUser(
+      String name,
+      String fatherName,
+      String gender,
+      String mobile,
+      String cnic,
+      String email,
+      String address,
+      String username,
+      String password,
+      String redDate,
+      int status,
+      int role,
+      ) async {
     isLoading(true);
     try {
       log('Attempting to register: $username');
@@ -154,13 +159,27 @@ class SignupController extends GetxController {
 
         if (responseData['Status'] == 1) {
           // Success case
+          // Save user data to shared preferences
+          await saveUserData(
+            name,
+            fatherName,
+            gender,
+            mobile,
+            cnic,
+            email,
+            address,
+            username,
+            redDate,
+            status,
+            role,
+          );
+
           Snackbar.snackBar('LineUp', 'Registration Successful!');
           Get.offAll(() => BottomNavScreen());
           return SignUpModel.fromJson(responseData);
         } else {
           // Handle specific error messages from server
-          String errorMessage =
-              responseData['Message'] ?? 'Registration failed';
+          String errorMessage = responseData['Message'] ?? 'Registration failed';
 
           // Provide user-friendly messages for known errors
           if (errorMessage.contains("UK_LpUsers_Mobile")) {
@@ -190,6 +209,57 @@ class SignupController extends GetxController {
       return null;
     } finally {
       isLoading(false);
+    }
+  }
+
+  // Method to save user data to SharedPreferences
+  Future<void> saveUserData(
+      String name,
+      String fatherName,
+      String gender,
+      String mobile,
+      String cnic,
+      String email,
+      String address,
+      String username,
+      String regDate,
+      int status,
+      int role,
+      ) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      // Create a map of user data
+      Map<String, dynamic> userData = {
+        'fullName': name,
+        'fatherName': fatherName,
+        'gender': gender,
+        'phoneNumber': mobile,
+        'cnic': cnic,
+        'email': email,
+        'address': address,
+        'userName': username,
+        'registrationDate': regDate,
+        'status': status.toString(),
+        'role': role.toString(),
+      };
+
+      // Save the map as a JSON string
+      await prefs.setString('user_data', jsonEncode(userData));
+      log('User data saved to SharedPreferences');
+    } catch (e) {
+      log('Error saving user data: $e');
+    }
+  }
+
+  // Alternative method to save user data using UserModel
+  Future<void> saveUserModelData(UserModel user) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('user_data', jsonEncode(user.toJson()));
+      log('User model data saved to SharedPreferences');
+    } catch (e) {
+      log('Error saving user model data: $e');
     }
   }
 }

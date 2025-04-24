@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import '../../Controllers/profile_controller.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -12,8 +13,24 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  final ProfileController controller = Get.put(ProfileController());
   File? _profileImage;
   final ImagePicker _picker = ImagePicker();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedImage();
+  }
+
+  Future<void> _loadSavedImage() async {
+    final imagePath = await controller.getProfileImage();
+    if (imagePath != null) {
+      setState(() {
+        _profileImage = File(imagePath);
+      });
+    }
+  }
 
   Future<void> _pickImage() async {
     try {
@@ -22,6 +39,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         setState(() {
           _profileImage = File(image.path);
         });
+        // Save the image path
+        await controller.saveProfileImage(image.path);
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -47,68 +66,81 @@ class _ProfileScreenState extends State<ProfileScreen> {
         centerTitle: true,
         elevation: 0,
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            const SizedBox(height: 30),
-            Stack(
-              alignment: Alignment.bottomRight,
-              children: [
-                CircleAvatar(
-                  radius: 60,
-                  backgroundColor: AppColors.orangeShade,
-                  backgroundImage:
-                  _profileImage != null ? FileImage(_profileImage!) : null,
-                  child: _profileImage == null
-                      ? const Icon(Icons.person, size: 70, color: Colors.white)
-                      : null,
-                ),
-                Positioned(
-                  child: GestureDetector(
-                    onTap: _pickImage,
-                    child: CircleAvatar(
-                      backgroundColor: Colors.white,
-                      radius: 18,
-                      child: const Icon(Icons.camera_alt, size: 18, color: Colors.black87),
+      body: Obx(() {
+        if (controller.isLoading.value) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (controller.user.value == null) {
+          return const Center(child: Text("No user data found"));
+        }
+
+        final user = controller.user.value!;
+
+        return SingleChildScrollView(
+          child: Column(
+            children: [
+              const SizedBox(height: 30),
+              Stack(
+                alignment: Alignment.bottomRight,
+                children: [
+                  CircleAvatar(
+                    radius: 60,
+                    backgroundColor: AppColors.orangeShade,
+                    backgroundImage:
+                    _profileImage != null ? FileImage(_profileImage!) : null,
+                    child: _profileImage == null
+                        ? const Icon(Icons.person, size: 70, color: Colors.white)
+                        : null,
+                  ),
+                  Positioned(
+                    child: GestureDetector(
+                      onTap: _pickImage,
+                      child: CircleAvatar(
+                        backgroundColor: Colors.white,
+                        radius: 18,
+                        child: const Icon(Icons.camera_alt, size: 18, color: Colors.black87),
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              "Muhammad Adnan",
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 0.5,
+                ],
               ),
-            ),
-            const SizedBox(height: 20),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Card(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                elevation: 4,
-                child: Column(
-                  children: const [
-                    _DetailItem(title: "Father Name", value: "Muhammad Qasim", icon: Icons.person_2),
-                    _DetailItem(title: "Mobile", value: "03260483582", icon: Icons.phone),
-                    _DetailItem(title: "Mail", value: "adnanqasim804@gmail.com", icon: Icons.email),
-                    _DetailItem(title: "Username", value: "adnan804", icon: Icons.person_outline),
-                    _DetailItem(title: "CNIC", value: "12345678909876", icon: Icons.credit_card),
-                    _DetailItem(title: "Address", value: "Shujabad Multan", icon: Icons.home),
-                    _DetailItem(title: "Gender", value: "Male", icon: Icons.male),
-                  ],
+              const SizedBox(height: 16),
+              Text(
+                user.fullName,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
                 ),
               ),
-            ),
-            const SizedBox(height: 30),
-          ],
-        ),
-      ),
+              const SizedBox(height: 20),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Card(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  elevation: 4,
+                  child: Column(
+                    children: [
+                      _DetailItem(title: "Father Name", value: user.fatherName, icon: Icons.person_2),
+                      _DetailItem(title: "Mobile", value: user.phoneNumber, icon: Icons.phone),
+                      _DetailItem(title: "Mail", value: user.email, icon: Icons.email),
+                      _DetailItem(title: "Username", value: user.userName, icon: Icons.person_outline),
+                      _DetailItem(title: "CNIC", value: user.cnic, icon: Icons.credit_card),
+                      _DetailItem(title: "Address", value: user.address, icon: Icons.home),
+                      _DetailItem(title: "Gender", value: user.getDisplayGender(), icon: Icons.male),
+                      _DetailItem(title: "Joining Date", value: user.registrationDate, icon: Icons.calendar_today),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 30),
+            ],
+          ),
+        );
+      }),
     );
   }
 }

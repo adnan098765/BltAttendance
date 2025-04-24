@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import '../../Widgets/custom_text_field.dart';
 import 'new_password_screen.dart';
+import '../../controllers/forgot_password_controller.dart'; // Make sure this path is correct
 
 class ForgotPasswordScreen extends StatelessWidget {
   final _formKey = GlobalKey<FormState>();
@@ -13,7 +14,9 @@ class ForgotPasswordScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final controller = Get.put(ForgotPasswordController());
     double height = MediaQuery.of(context).size.height;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -22,15 +25,8 @@ class ForgotPasswordScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Back button
-              // IconButton(
-              //   icon: const Icon(Icons.arrow_back),
-              //   onPressed: () => Get.back(),
-              // ),
+              SizedBox(height: height * 0.050),
 
-               SizedBox(height:height*0.050),
-
-              // Title
               Text(
                 'Forgot Password',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -51,7 +47,6 @@ class ForgotPasswordScreen extends StatelessWidget {
 
               const SizedBox(height: 32),
 
-              // Form
               Form(
                 key: _formKey,
                 child: Column(
@@ -73,15 +68,17 @@ class ForgotPasswordScreen extends StatelessWidget {
                       },
                     ),
 
-                     SizedBox(height: height*0.034),
+                    SizedBox(height: height * 0.034),
 
-                    // Next Button
-                    SizedBox(
+                    Obx(() => SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () {
+                        onPressed: controller.isLoading.value
+                            ? null
+                            : () {
                           if (_formKey.currentState!.validate()) {
-                            Get.to(() => ChangePasswordScreen());
+                            controller.sendResetEmail(
+                                mailController.text.trim());
                           }
                         },
                         style: ElevatedButton.styleFrom(
@@ -92,14 +89,24 @@ class ForgotPasswordScreen extends StatelessWidget {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          padding:
+                          const EdgeInsets.symmetric(vertical: 14),
                         ),
-                        child: const Text(
+                        child: controller.isLoading.value
+                            ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                            : const Text(
                           "Next",
                           style: TextStyle(fontSize: 16),
                         ),
                       ),
-                    ),
+                    )),
                   ],
                 ),
               ),

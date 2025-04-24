@@ -60,6 +60,7 @@ dependencies:
   url_launcher: ^6.2.1
   flutter_svg: ^2.0.17
   shared_preferences: ^2.5.3
+  get_storage: ^2.1.1
   splash_master: ^0.0.2
   permission_handler: ^12.0.0+1
 dev_dependencies:
