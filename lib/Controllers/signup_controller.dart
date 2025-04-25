@@ -9,7 +9,6 @@ import '../Models/signup_model.dart';
 import '../Screens/BottonNavScreen/bottom_nav_screen.dart';
 import '../Widgets/snack_bar.dart';
 
-// Combined controller that includes the login functionality
 class SignupController extends GetxController {
   final formKey = GlobalKey<FormState>();
 
@@ -128,7 +127,7 @@ class SignupController extends GetxController {
       log('Attempting to register: $username');
 
       final response = await http.post(
-        Uri.parse('http://crolahore.azurewebsites.net/api/Master/SaveLpUsers'),
+        Uri.parse('https://crolahore.azurewebsites.net/api/Master/SaveLpUsers'),
         body: {
           'Name': name,
           'FatherName': fatherName,
@@ -185,7 +184,7 @@ class SignupController extends GetxController {
       log('Error during registration: $e');
       Snackbar.snackBar(
         'Error',
-        'An error occurred during registration. Please try again.',
+        'An error occurred during registration. Please try again later.',
       );
       return null;
     } finally {
@@ -193,3 +192,12 @@ class SignupController extends GetxController {
     }
   }
 }
+
+// Future getApi()async{
+//   Response response = (await http.get(Uri.parse("https://crolahore.azurewebsites.net/api/Master/SaveLpUsers"))) as Response;
+//   try{
+//     if(response.statusCode)
+//   }catch(e){
+//
+//   }
+// }

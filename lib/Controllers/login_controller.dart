@@ -14,7 +14,7 @@ class LoginController extends GetxController {
      isLoading(true);
     try {
       final response = await http.get(
-        Uri.parse('http://crolahore.azurewebsites.net/api/Master/GetLpUserByUsername?username=$username'),
+        Uri.parse('https://crolahore.azurewebsites.net/api/Master/GetLpUserByUsername?username=$username'),
       );
 
       if (response.statusCode == 200) {
