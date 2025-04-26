@@ -222,56 +222,56 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
               child: Column(
                 children: [
                   // Employee Card
-                  Card(
-                    elevation: 4,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(20.0),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 35,
-                            backgroundColor: AppColors.orangeShade,
-                            child: Text(
-                              widget.userName.isNotEmpty
-                                  ? widget.userName[0].toUpperCase()
-                                  : "U",
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 20),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  widget.userName,
-                                  style: const TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 5),
-                                Text(
-                                  "Employee ID: EMP-${widget.userName.hashCode.abs()}",
-                                  style: TextStyle(
-                                    color: Colors.grey[600],
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                  // Card(
+                  //   elevation: 4,
+                  //   shape: RoundedRectangleBorder(
+                  //     borderRadius: BorderRadius.circular(15),
+                  //   ),
+                  //   child: Padding(
+                  //     padding: const EdgeInsets.all(20.0),
+                  //     child: Row(
+                  //       children: [
+                  //         CircleAvatar(
+                  //           radius: 35,
+                  //           backgroundColor: AppColors.orangeShade,
+                  //           child: Text(
+                  //             widget.userName.isNotEmpty
+                  //                 ? widget.userName[0].toUpperCase()
+                  //                 : "U",
+                  //             style: const TextStyle(
+                  //               color: Colors.white,
+                  //               fontSize: 28,
+                  //               fontWeight: FontWeight.bold,
+                  //             ),
+                  //           ),
+                  //         ),
+                  //         const SizedBox(width: 20),
+                  //         Expanded(
+                  //           child: Column(
+                  //             crossAxisAlignment: CrossAxisAlignment.start,
+                  //             children: [
+                  //               Text(
+                  //                 widget.userName,
+                  //                 style: const TextStyle(
+                  //                   fontSize: 20,
+                  //                   fontWeight: FontWeight.bold,
+                  //                 ),
+                  //               ),
+                  //               const SizedBox(height: 5),
+                  //               Text(
+                  //                 "Employee ID: EMP-${widget.userName.hashCode.abs()}",
+                  //                 style: TextStyle(
+                  //                   color: Colors.grey[600],
+                  //                   fontSize: 14,
+                  //                 ),
+                  //               ),
+                  //             ],
+                  //           ),
+                  //         ),
+                  //       ],
+                  //     ),
+                  //   ),
+                  // ),
 
                   const SizedBox(height: 30),
 

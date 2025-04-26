@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'package:attendance/Screens/Home/home_screen.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -21,14 +22,15 @@ class SignupController extends GetxController {
   final userName = TextEditingController();
   final password = TextEditingController();
   final confirmPassword = TextEditingController();
-  final registrationDate = TextEditingController();
 
-  var gender = "M".obs;
-  var status = "".obs;
-  var role = "".obs;
+  // Removed registrationDate controller
+  // Removed status and role variables
+
+  var gender = "Male".obs;
   var showPassword = false.obs;
   var showConfirmPassword = false.obs;
   var isLoading = false.obs;
+
   String? validatePhone(String? value) {
     if (value == null || value.isEmpty) {
       return 'Required field';
@@ -79,14 +81,10 @@ class SignupController extends GetxController {
     return null;
   }
 
-  // Updated registerUser method in SignupController
+  // Updated registerUser method - no longer needs registration date, status, or role
   void registerUser() async {
     if (formKey.currentState!.validate()) {
       try {
-        // Convert string status/role to int
-        int statusValue = int.parse(status.value);
-        int roleValue = int.parse(role.value);
-
         await loginUser(
           fullName.text,
           fatherName.text,
@@ -97,38 +95,38 @@ class SignupController extends GetxController {
           address.text,
           userName.text,
           password.text,
-          registrationDate.text,
-          statusValue,
-          roleValue,
         );
       } catch (e) {
         log('Registration error: $e');
-        // Errors will be handled in loginUser method
       }
     }
   }
 
   Future loginUser(
-    String name,
-    String fatherName,
-    String gender,
-    String mobile,
-    String cnic,
-    String email,
-    String address,
-    String username,
-    String password,
-    String redDate,
-    int status,
-    int role,
-  ) async {
+      String name,
+      String fatherName,
+      String gender,
+      String mobile,
+      String cnic,
+      String email,
+      String address,
+      String username,
+      String password,
+      ) async {
     isLoading(true);
     try {
       log('Attempting to register: $username');
 
+      // Get current date in SQL Server compatible format
+      String currentDate = DateTime.now().toIso8601String().split('T')[0];
+
       final response = await http.post(
         Uri.parse('https://crolahore.azurewebsites.net/api/Master/SaveLpUsers'),
-        body: {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode({
           'Name': name,
           'FatherName': fatherName,
           'Gender': gender,
@@ -138,10 +136,11 @@ class SignupController extends GetxController {
           'Address': address,
           'UserName': username,
           'Password': password,
-          'RegDate': redDate,
-          "Status": status.toString(),
-          'Role': role.toString(),
-        },
+          'RegDate': currentDate,
+          // Default values for status and role if the backend requires them
+          'Status': "1",
+          'Role': "0",
+        }),
       );
 
       log('API Response: ${response.statusCode}');
@@ -150,11 +149,12 @@ class SignupController extends GetxController {
       if (response.statusCode == 200) {
         var responseData = jsonDecode(response.body);
         log('Response data: $responseData');
+        log("THe date of user signUp $currentDate");
 
         if (responseData['Status'] == 1) {
           // Success case
           Snackbar.snackBar('LineUp', 'Registration Successful!');
-          Get.offAll(() => BottomNavScreen());
+          Get.offAll(() => HomeScreen());
           return SignUpModel.fromJson(responseData);
         } else {
           // Handle specific error messages from server
@@ -192,12 +192,3 @@ class SignupController extends GetxController {
     }
   }
 }
-
-// Future getApi()async{
-//   Response response = (await http.get(Uri.parse("https://crolahore.azurewebsites.net/api/Master/SaveLpUsers"))) as Response;
-//   try{
-//     if(response.statusCode)
-//   }catch(e){
-//
-//   }
-// }

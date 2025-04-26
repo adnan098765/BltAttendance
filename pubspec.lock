@@ -209,6 +209,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.7"
+  fade_animation_delayed:
+    dependency: "direct main"
+    description:
+      name: fade_animation_delayed
+      sha256: dd61f924aa045a1be1266897201fe39d9074b4f113588fd56b83db3433da3d40
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.3"
   fake_async:
     dependency: transitive
     description:

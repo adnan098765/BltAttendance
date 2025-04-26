@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'package:attendance/Screens/Home/home_screen.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import '../Models/login_model.dart';
@@ -27,8 +28,9 @@ class LoginController extends GetxController {
           // Store ID in SharedPreferences
           await getUserId();
 
+
           Snackbar.snackBar('Line UP', 'Login Successfully!');
-          Get.offAll(BottomNavScreen());
+          Get.offAll(HomeScreen());
           return LoginModel.fromJson(responseData[0]);
         } else {
           Snackbar.snackBar('Line Up', 'User not found ${response.statusCode}');

@@ -126,17 +126,17 @@ class SignupScreen extends StatelessWidget {
                 validator: controller.validateConfirmPassword,
                 onSuffixIconPressed: () => controller.showConfirmPassword.toggle(),
               )),
-              const SizedBox(height: 15),
-              _buildRegistrationDateField(),
-              const SizedBox(height: 15),
+              // const SizedBox(height: 15),
+              // _buildRegistrationDateField(),
+              // const SizedBox(height: 15),
 
               // Status Dropdown
-              _buildStatusDropdown(),
+              // _buildStatusDropdown(),
               const SizedBox(height: 15),
 
               // Role Dropdown
-              _buildRoleDropdown(),
-              const SizedBox(height: 25),
+              // _buildRoleDropdown(),
+
 
               Obx(() => ElevatedButton(
                 onPressed: controller.isLoading.value ? null : controller.registerUser,
@@ -192,7 +192,7 @@ class SignupScreen extends StatelessWidget {
     return Obx(() => DropdownButtonFormField<String>(
       value: controller.gender.value,
       decoration: _dropdownDecoration(Icons.person_outline),
-      items: ["M", "F", "O"].map((String value) {
+      items: ["Male", "Female", "Other"].map((String value) {
         return DropdownMenuItem<String>(
           value: value,
           child: Text(value),
@@ -203,68 +203,68 @@ class SignupScreen extends StatelessWidget {
     ));
   }
 
-  Widget _buildRegistrationDateField() {
-    return TextFormField(
-      controller: controller.registrationDate,
-      readOnly: true,
-      decoration: _dropdownDecoration(Icons.calendar_today).copyWith(
-        hintText: "Joining Date",hintStyle: TextStyle(color: Colors.grey[600]),
-      ),
-      onTap: () async {
-        final DateTime? pickedDate = await showDatePicker(
-          context: Get.context!,
-          initialDate: DateTime.now(),
-          firstDate: DateTime(2000),
-          lastDate: DateTime(2100),
-        );
-        if (pickedDate != null) {
-          controller.registrationDate.text =
-          "${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}";
-        }
-      },
-      validator: (value) => value?.isEmpty ?? true ? 'Required field' : null,
-    );
-  }
-
-  Widget _buildStatusDropdown() {
-    return Obx(() => DropdownButtonFormField<String>(
-      value: controller.status.value.isEmpty ? null : controller.status.value,
-      decoration: _dropdownDecoration(Icons.check_circle_outline),
-      items: [
-        DropdownMenuItem(
-          value: "1",  // API expects "1" for Active
-          child: Text("1"),
-        ),
-        DropdownMenuItem(
-          value: "0",  // API expects "0" for Inactive
-          child: Text("0"),
-        ),
-      ],
-      hint: Text("Select Status"),
-      onChanged: (value) => controller.status.value = value!,
-      validator: (value) => value == null ? 'Please select status' : null,
-    ));
-  }
-
-  Widget _buildRoleDropdown() {
-    return Obx(() => DropdownButtonFormField<String>(
-      value: controller.role.value.isEmpty ? null : controller.role.value,
-      decoration: _dropdownDecoration(Icons.group),
-      items: [
-        DropdownMenuItem(
-          value: "0",  // API expects "0" for Regular User
-          child: Text("0"),
-        ),
-        DropdownMenuItem(
-          value: "1",  // API expects "1" for Admin
-          child: Text("1"),
-        ),
-      ],
-      hint: Text("Select Role"),
-      onChanged: (value) => controller.role.value = value!,
-      validator: (value) => value == null ? 'Please select role' : null,
-    ));
-  }
+  // Widget _buildRegistrationDateField() {
+  //   return TextFormField(
+  //     controller: controller.registrationDate,
+  //     readOnly: true,
+  //     decoration: _dropdownDecoration(Icons.calendar_today).copyWith(
+  //       hintText: "Joining Date",hintStyle: TextStyle(color: Colors.grey[600]),
+  //     ),
+  //     onTap: () async {
+  //       final DateTime? pickedDate = await showDatePicker(
+  //         context: Get.context!,
+  //         initialDate: DateTime.now(),
+  //         firstDate: DateTime(2000),
+  //         lastDate: DateTime(2100),
+  //       );
+  //       if (pickedDate != null) {
+  //         controller.registrationDate.text =
+  //         "${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}";
+  //       }
+  //     },
+  //     validator: (value) => value?.isEmpty ?? true ? 'Required field' : null,
+  //   );
+  // }
+  //
+  // Widget _buildStatusDropdown() {
+  //   return Obx(() => DropdownButtonFormField<String>(
+  //     value: controller.status.value.isEmpty ? null : controller.status.value,
+  //     decoration: _dropdownDecoration(Icons.check_circle_outline),
+  //     items: [
+  //       DropdownMenuItem(
+  //         value: "1",  // API expects "1" for Active
+  //         child: Text("1"),
+  //       ),
+  //       DropdownMenuItem(
+  //         value: "0",  // API expects "0" for Inactive
+  //         child: Text("0"),
+  //       ),
+  //     ],
+  //     hint: Text("Select Status"),
+  //     onChanged: (value) => controller.status.value = value!,
+  //     validator: (value) => value == null ? 'Please select status' : null,
+  //   ));
+  // }
+  //
+  // Widget _buildRoleDropdown() {
+  //   return Obx(() => DropdownButtonFormField<String>(
+  //     value: controller.role.value.isEmpty ? null : controller.role.value,
+  //     decoration: _dropdownDecoration(Icons.group),
+  //     items: [
+  //       DropdownMenuItem(
+  //         value: "0",  // API expects "0" for Regular User
+  //         child: Text("0"),
+  //       ),
+  //       DropdownMenuItem(
+  //         value: "1",  // API expects "1" for Admin
+  //         child: Text("1"),
+  //       ),
+  //     ],
+  //     hint: Text("Select Role"),
+  //     onChanged: (value) => controller.role.value = value!,
+  //     validator: (value) => value == null ? 'Please select role' : null,
+  //   ));
+  // }
 
   InputDecoration _dropdownDecoration(IconData icon) {
     return InputDecoration(
