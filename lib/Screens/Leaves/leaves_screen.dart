@@ -6,8 +6,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../AppColors/app_colors.dart';
+import '../../Controllers/leaves_controller.dart';
+import '../../Models/save_lp_requests.dart';
 import '../../Widgets/text_widget.dart';
-
 
 class LeaveScreen extends StatefulWidget {
   const LeaveScreen({super.key});
@@ -21,6 +22,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
   final TextEditingController _reasonController = TextEditingController();
   final List<Map<String, String>> _submittedLeaves = [];
   final Map<String, Timer> _cancelTimers = {};
+  final LeaveController leaveController = Get.put(LeaveController());
 
   final List<String> _leaveOptions = [
     'Half Leave',
@@ -66,29 +68,66 @@ class _LeaveScreenState extends State<LeaveScreen> {
   }
 
   void _submitLeave() async {
-    if (_selectedLeaveType != null && _reasonController.text.isNotEmpty) {
-      final newLeave = {
-        'type': _selectedLeaveType!,
-        'reason': _reasonController.text.trim(),
-        'timestamp': DateTime.now().toIso8601String(),
-      };
-      setState(() {
-        _submittedLeaves.add(newLeave);
-        _selectedLeaveType = null;
-        _reasonController.clear();
-      });
-      await _saveSubmittedLeaves();
-      _startCancelTimer(newLeave);
+    const int loggedInUserId = 1;
 
-      Get.snackbar('Leave Submitted', 'Your leave has been recorded successfully!',
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: Colors.green.shade400,
-          colorText: Colors.white);
+    if (_selectedLeaveType != null && _reasonController.text.isNotEmpty) {
+      final leaveRequest = SaveLpLeaveRequest(
+        type: _getLeaveTypeId(_selectedLeaveType!),
+        reason: _reasonController.text.trim(),
+        status: 4,
+        userId: loggedInUserId,
+      );
+
+      Get.dialog(const Center(child: CircularProgressIndicator()), barrierDismissible: false);
+
+      final success = await leaveController.submitLeaveApi(leaveRequest);
+
+      Get.back();
+
+      if (success) {
+        final newLeave = {
+          'type': _selectedLeaveType!,
+          'reason': _reasonController.text.trim(),
+          'timestamp': DateTime.now().toIso8601String(),
+        };
+        setState(() {
+          _submittedLeaves.add(newLeave);
+          _selectedLeaveType = null;
+          _reasonController.clear();
+        });
+        await _saveSubmittedLeaves();
+        _startCancelTimer(newLeave);
+
+        Get.snackbar('Leave Submitted', 'Your leave has been recorded successfully!',
+            snackPosition: SnackPosition.TOP,
+            backgroundColor: Colors.green.shade400,
+            colorText: Colors.white);
+      } else {
+        Get.snackbar('Submission Failed', 'Failed to submit leave. Try again later.',
+            snackPosition: SnackPosition.TOP,
+            backgroundColor: Colors.red.shade400,
+            colorText: Colors.white);
+      }
     } else {
       Get.snackbar('Missing Info', 'Please select leave type and enter reason.',
           snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.red.shade400,
           colorText: Colors.white);
+    }
+  }
+
+  int _getLeaveTypeId(String leaveType) {
+    switch (leaveType) {
+      case 'Quick Leave':
+        return 1;
+      case 'Emergency Leave':
+        return 2;
+      case 'Half Day':
+        return 3;
+      case 'Long Leave':
+        return 4;
+      default:
+        return 0; // unknown
     }
   }
 
@@ -130,16 +169,15 @@ class _LeaveScreenState extends State<LeaveScreen> {
         backgroundColor: AppColors.appColor,
         leading: IconButton(
           onPressed: () => Get.back(),
-          icon: const Icon(Icons.arrow_back_ios,color: AppColors.whiteTheme,),
+          icon: const Icon(Icons.arrow_back_ios, color: AppColors.whiteTheme),
         ),
-        title: Text('Leave', style: GoogleFonts.poppins(fontWeight: FontWeight.bold,color: AppColors.whiteTheme)),
+        title: Text('Leave', style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: AppColors.whiteTheme)),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Dropdown
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
@@ -215,8 +253,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Submitted Leaves:',
-                      style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600)),
+                  Text('Submitted Leaves:', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 10),
                   ..._submittedLeaves.reversed.map((leave) {
                     final timestamp = leave['timestamp'] ?? '';
@@ -228,15 +265,11 @@ class _LeaveScreenState extends State<LeaveScreen> {
                       elevation: 6,
                       child: ListTile(
                         title: Text(leave['type'] ?? ''),
-                        subtitle: Text(leave['reason'] ?? '',
-                            style: TextStyle(color: AppColors.whiteTheme)),
+                        subtitle: Text(leave['reason'] ?? '', style: TextStyle(color: AppColors.whiteTheme)),
                         trailing: canCancel
                             ? TextButton(
                           onPressed: () => _cancelLeave(timestamp),
-                          child: Text('Cancel leave',
-                              style: TextStyle(
-                                  color: AppColors.appColor,
-                                  fontWeight: FontWeight.bold)),
+                          child: Text('Cancel leave', style: TextStyle(color: AppColors.appColor, fontWeight: FontWeight.bold)),
                         )
                             : null,
                       ),
