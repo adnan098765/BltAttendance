@@ -6,6 +6,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../AppColors/app_colors.dart';
+import '../../Controllers/get_leaves_controller.dart';
+import '../../Controllers/get_leaves_status_controller.dart';
+import '../../Controllers/get_leaves_type_controller.dart';
 import '../../Controllers/leaves_controller.dart';
 import '../../Models/save_lp_requests.dart';
 import '../../Widgets/text_widget.dart';
@@ -23,6 +26,11 @@ class _LeaveScreenState extends State<LeaveScreen> {
   final List<Map<String, String>> _submittedLeaves = [];
   final Map<String, Timer> _cancelTimers = {};
   final LeaveController leaveController = Get.put(LeaveController());
+  final leaveStatusController = Get.put(GetLpLeaveStatusController());
+  final GetLeavesController getleavesController = Get.put(GetLeavesController());
+
+  final GetLeaveTypesController leaveTypesController = Get.put(GetLeaveTypesController());
+
 
   final List<String> _leaveOptions = [
     'Half Leave',
@@ -36,6 +44,10 @@ class _LeaveScreenState extends State<LeaveScreen> {
   void initState() {
     super.initState();
     _loadSubmittedLeaves();
+    leaveTypesController.fetchLeaveTypes();
+    getleavesController.fetchLeaves();
+
+
   }
 
   Future<void> _loadSubmittedLeaves() async {
@@ -60,6 +72,11 @@ class _LeaveScreenState extends State<LeaveScreen> {
       }
       setState(() {});
     }
+  }
+  int _getLeaveTypeId(String leaveType) {
+    final selected = leaveTypesController.leaveTypes
+        .firstWhereOrNull((e) => e.name == leaveType);
+    return selected?.id ?? 0;
   }
 
   Future<void> _saveSubmittedLeaves() async {
@@ -116,20 +133,20 @@ class _LeaveScreenState extends State<LeaveScreen> {
     }
   }
 
-  int _getLeaveTypeId(String leaveType) {
-    switch (leaveType) {
-      case 'Quick Leave':
-        return 1;
-      case 'Emergency Leave':
-        return 2;
-      case 'Half Day':
-        return 3;
-      case 'Long Leave':
-        return 4;
-      default:
-        return 0; // unknown
-    }
-  }
+  // int _getLeaveTypeId(String leaveType) {
+  //   switch (leaveType) {
+  //     case 'Quick Leave':
+  //       return 1;
+  //     case 'Emergency Leave':
+  //       return 2;
+  //     case 'Half Day':
+  //       return 3;
+  //     case 'Long Leave':
+  //       return 4;
+  //     default:
+  //       return 0; // unknown
+  //   }
+  // }
 
   void _startCancelTimer(Map<String, String> leave) {
     final id = leave['timestamp']!;
@@ -178,30 +195,37 @@ class _LeaveScreenState extends State<LeaveScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                color: Colors.grey[200],
-              ),
-              child: DropdownButton<String>(
-                isExpanded: true,
-                hint: Text('Select Leave Type', style: GoogleFonts.poppins(fontSize: 16)),
-                value: _selectedLeaveType,
-                items: _leaveOptions.map((type) {
-                  return DropdownMenuItem<String>(
-                    value: type,
-                    child: Text(type, style: GoogleFonts.poppins()),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedLeaveType = value;
-                  });
-                },
-                underline: const SizedBox(),
-              ),
-            ),
+            Obx(() {
+              if (leaveTypesController.isLoading.value) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  color: Colors.grey[200],
+
+                ),
+                child: DropdownButton<String>(
+                  isExpanded: true,
+                  hint: Text('Select Leave Type', style: GoogleFonts.poppins(fontSize: 16)),
+                  value: _selectedLeaveType,
+                  items: leaveTypesController.leaveTypes.map((leave) {
+                    return DropdownMenuItem<String>(
+                      value: leave.name,
+                      child: Text(leave.name, style: GoogleFonts.poppins()),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedLeaveType = value;
+                    });
+                  },
+                  underline: const SizedBox(),
+                ),
+              );
+            }),
+
 
             const SizedBox(height: 20),
 
@@ -250,33 +274,39 @@ class _LeaveScreenState extends State<LeaveScreen> {
             ],
 
             if (_submittedLeaves.isNotEmpty)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Submitted Leaves:', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 10),
-                  ..._submittedLeaves.reversed.map((leave) {
-                    final timestamp = leave['timestamp'] ?? '';
-                    final canCancel = _cancelTimers.containsKey(timestamp);
+              Obx(() {
+                if (getleavesController.isLoading.value) {
+                  return const Center(child: Text(""));
+                }
+
+                if (getleavesController.errorMessage.value.isNotEmpty) {
+                  return Text(getleavesController.errorMessage.value, style: TextStyle(color: Colors.red));
+                }
+
+                if (getleavesController.leaves.isEmpty) {
+                  return Text("No leaves submitted yet", style: GoogleFonts.poppins());
+                }
+
+                return ListView.builder(
+                  itemCount: getleavesController.leaves.length,
+                  itemBuilder: (context, index) {
+                    final leave = getleavesController.leaves[index];
                     return Card(
-                      color: AppColors.orangeShade,
                       margin: const EdgeInsets.symmetric(vertical: 6),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      elevation: 6,
                       child: ListTile(
-                        title: Text(leave['type'] ?? ''),
-                        subtitle: Text(leave['reason'] ?? '', style: TextStyle(color: AppColors.whiteTheme)),
-                        trailing: canCancel
-                            ? TextButton(
-                          onPressed: () => _cancelLeave(timestamp),
-                          child: Text('Cancel leave', style: TextStyle(color: AppColors.appColor, fontWeight: FontWeight.bold)),
-                        )
-                            : null,
+                        title: Text('Type: ${leave.type}', style: GoogleFonts.poppins()),
+                        subtitle: Text("${leave.reason}", style: TextStyle(color: Colors.black)),
+                        trailing: TextButton(
+                          onPressed: () {
+                            // Add cancel logic if needed
+                          },
+                          child: Text('Cancel leave', style: TextStyle(color: Colors.red)),
+                        ),
                       ),
                     );
-                  }),
-                ],
-              )
+                  },
+                );
+              }),
           ],
         ),
       ),
