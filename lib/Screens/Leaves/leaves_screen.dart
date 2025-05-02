@@ -28,17 +28,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
   final LeaveController leaveController = Get.put(LeaveController());
   final leaveStatusController = Get.put(GetLpLeaveStatusController());
   final GetLeavesController getleavesController = Get.put(GetLeavesController());
-
   final GetLeaveTypesController leaveTypesController = Get.put(GetLeaveTypesController());
-
-
-  final List<String> _leaveOptions = [
-    'Half Leave',
-    'Emergency Leave',
-    'Long Leave',
-    'Sick Leave',
-    'Personal Leave',
-  ];
 
   @override
   void initState() {
@@ -46,8 +36,6 @@ class _LeaveScreenState extends State<LeaveScreen> {
     _loadSubmittedLeaves();
     leaveTypesController.fetchLeaveTypes();
     getleavesController.fetchLeaves();
-
-
   }
 
   Future<void> _loadSubmittedLeaves() async {
@@ -73,15 +61,15 @@ class _LeaveScreenState extends State<LeaveScreen> {
       setState(() {});
     }
   }
-  int _getLeaveTypeId(String leaveType) {
-    final selected = leaveTypesController.leaveTypes
-        .firstWhereOrNull((e) => e.name == leaveType);
-    return selected?.id ?? 0;
-  }
 
   Future<void> _saveSubmittedLeaves() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('leaves', jsonEncode(_submittedLeaves));
+  }
+
+  int _getLeaveTypeId(String leaveType) {
+    final selected = leaveTypesController.leaveTypes.firstWhereOrNull((e) => e.name == leaveType);
+    return selected?.id ?? 0;
   }
 
   void _submitLeave() async {
@@ -95,10 +83,12 @@ class _LeaveScreenState extends State<LeaveScreen> {
         userId: loggedInUserId,
       );
 
-      Get.dialog(const Center(child: CircularProgressIndicator()), barrierDismissible: false);
+      Get.dialog(
+        const Center(child: CircularProgressIndicator()),
+        barrierDismissible: false,
+      );
 
       final success = await leaveController.submitLeaveApi(leaveRequest);
-
       Get.back();
 
       if (success) {
@@ -115,42 +105,37 @@ class _LeaveScreenState extends State<LeaveScreen> {
         await _saveSubmittedLeaves();
         _startCancelTimer(newLeave);
 
-        Get.snackbar('Leave Submitted', 'Your leave has been recorded successfully!',
-            snackPosition: SnackPosition.TOP,
-            backgroundColor: Colors.green.shade400,
-            colorText: Colors.white);
+        Get.snackbar(
+          'Leave Submitted',
+          'Your leave has been recorded successfully!',
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: AppColors.appColor,
+          colorText: Colors.white,
+        );
+        getleavesController.fetchLeaves();
       } else {
-        Get.snackbar('Submission Failed', 'Failed to submit leave. Try again later.',
-            snackPosition: SnackPosition.TOP,
-            backgroundColor: Colors.red.shade400,
-            colorText: Colors.white);
-      }
-    } else {
-      Get.snackbar('Missing Info', 'Please select leave type and enter reason.',
+        Get.snackbar(
+          'Submission Failed',
+          'Failed to submit leave. Try again later.',
           snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.red.shade400,
-          colorText: Colors.white);
+          colorText: Colors.white,
+        );
+      }
+    } else {
+      Get.snackbar(
+        'Missing Info',
+        'Please select leave type and enter reason.',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.red.shade400,
+        colorText: Colors.white,
+      );
     }
   }
 
-  // int _getLeaveTypeId(String leaveType) {
-  //   switch (leaveType) {
-  //     case 'Quick Leave':
-  //       return 1;
-  //     case 'Emergency Leave':
-  //       return 2;
-  //     case 'Half Day':
-  //       return 3;
-  //     case 'Long Leave':
-  //       return 4;
-  //     default:
-  //       return 0; // unknown
-  //   }
-  // }
-
   void _startCancelTimer(Map<String, String> leave) {
     final id = leave['timestamp']!;
-    _cancelTimers[id] = Timer(Duration(minutes: 60), () {
+    _cancelTimers[id] = Timer(const Duration(minutes: 60), () {
       setState(() {
         _cancelTimers.remove(id);
       });
@@ -164,10 +149,13 @@ class _LeaveScreenState extends State<LeaveScreen> {
       _cancelTimers.remove(timestamp);
     });
     await _saveSubmittedLeaves();
-    Get.snackbar('Leave Cancelled', 'Your leave has been cancelled.',
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.orange.shade400,
-        colorText: Colors.white);
+    Get.snackbar(
+      'Leave Cancelled',
+      'Your leave has been cancelled.',
+      snackPosition: SnackPosition.TOP,
+      backgroundColor: Colors.orange.shade400,
+      colorText: Colors.white,
+    );
   }
 
   @override
@@ -188,7 +176,13 @@ class _LeaveScreenState extends State<LeaveScreen> {
           onPressed: () => Get.back(),
           icon: const Icon(Icons.arrow_back_ios, color: AppColors.whiteTheme),
         ),
-        title: Text('Leave', style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: AppColors.whiteTheme)),
+        title: Text(
+          'Leave',
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.bold,
+            color: AppColors.whiteTheme,
+          ),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -204,10 +198,11 @@ class _LeaveScreenState extends State<LeaveScreen> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10),
                   color: Colors.grey[200],
-
                 ),
+
                 child: DropdownButton<String>(
                   isExpanded: true,
+
                   hint: Text('Select Leave Type', style: GoogleFonts.poppins(fontSize: 16)),
                   value: _selectedLeaveType,
                   items: leaveTypesController.leaveTypes.map((leave) {
@@ -225,12 +220,13 @@ class _LeaveScreenState extends State<LeaveScreen> {
                 ),
               );
             }),
-
-
             const SizedBox(height: 20),
 
             if (_selectedLeaveType != null) ...[
-              Text('Reason for $_selectedLeaveType:', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+              Text(
+                'Reason for $_selectedLeaveType:',
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+              ),
               const SizedBox(height: 10),
               TextFormField(
                 controller: _reasonController,
@@ -273,34 +269,43 @@ class _LeaveScreenState extends State<LeaveScreen> {
               const SizedBox(height: 20),
             ],
 
-            if (_submittedLeaves.isNotEmpty)
+            if (_submittedLeaves.isNotEmpty || getleavesController.leaves.isNotEmpty)
               Obx(() {
                 if (getleavesController.isLoading.value) {
                   return const Center(child: Text(""));
                 }
 
                 if (getleavesController.errorMessage.value.isNotEmpty) {
-                  return Text(getleavesController.errorMessage.value, style: TextStyle(color: Colors.red));
+                  return Text(
+                    getleavesController.errorMessage.value,
+                    style: const TextStyle(color: Colors.red),
+                  );
                 }
 
                 if (getleavesController.leaves.isEmpty) {
-                  return Text("No leaves submitted yet", style: GoogleFonts.poppins());
+                  return Text(
+                    "No leaves submitted yet",
+                    style: GoogleFonts.poppins(),
+                  );
                 }
 
                 return ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
                   itemCount: getleavesController.leaves.length,
                   itemBuilder: (context, index) {
                     final leave = getleavesController.leaves[index];
                     return Card(
+                      color: AppColors.appColor,
                       margin: const EdgeInsets.symmetric(vertical: 6),
                       child: ListTile(
-                        title: Text('Type: ${leave.type}', style: GoogleFonts.poppins()),
-                        subtitle: Text("${leave.reason}", style: TextStyle(color: Colors.black)),
+                        title: Text('Type: ${leave.type}', style: TextStyle(fontSize: 16,color: AppColors.whiteTheme)),
+                        subtitle: Text("${leave.reason}", style: const TextStyle(color: AppColors.whiteTheme)),
                         trailing: TextButton(
                           onPressed: () {
-                            // Add cancel logic if needed
+                            // Future: Call cancel API here if needed.
                           },
-                          child: Text('Cancel leave', style: TextStyle(color: Colors.red)),
+                          child: const Text('Cancel leave', style: TextStyle(color: AppColors.blackColor)),
                         ),
                       ),
                     );

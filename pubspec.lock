@@ -368,6 +368,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.2.1"
+  gradient_circular_progress_indicator:
+    dependency: "direct main"
+    description:
+      name: gradient_circular_progress_indicator
+      sha256: "0a9d69c1226b6f273b365aa9fabf92de4ee353dfb185c9dcbc04aa97178037df"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.4"
   html:
     dependency: transitive
     description:

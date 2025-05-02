@@ -21,13 +21,16 @@ class GetLeavesController extends GetxController {
     try {
       // Updated URL to use the correct controller name
       // Based on error message, 'LpRequests' is not a valid controller
+      final userId = 1; // or whatever value you get from login/session
       final response = await http.get(
-        Uri.parse('https://crolahore.azurewebsites.net/api/LpLeaveRequests/GetLpLeaveRequestsByUserID?UserID=1'),
+        Uri.parse("https://crolahore.azurewebsites.net/api/Master/GetLpLeavesByUserID?UserID=1"),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
       );
+
+
 
       print('Response status code: ${response.statusCode}');
 
@@ -72,4 +75,29 @@ class GetLeavesController extends GetxController {
       isLoading(false);
     }
   }
+// Function to cancel a leave request
+// Future<bool> cancelLeave(int leaveId) async {
+//   try {
+//     // Implement your API call to cancel the leave
+//     final response = await http.delete(
+//       Uri.parse('https://crolahore.azurewebsites.net/api/LpLeaveRequests/$leaveId'),
+//       headers: {
+//         'Content-Type': 'application/json',
+//         'Accept': 'application/json',
+//       },
+//     );
+//
+//     if (response.statusCode == 200 || response.statusCode == 204) {
+//       // Refresh the leaves list after successful cancellation
+//       await fetchLeaves();
+//       return true;
+//     } else {
+//       print('Failed to cancel leave: ${response.statusCode}, ${response.body}');
+//       return false;
+//     }
+//   } catch (e) {
+//     print('Error cancelling leave: $e');
+//     return false;
+//   }
+// }
 }

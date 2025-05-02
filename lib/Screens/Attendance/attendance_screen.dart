@@ -1,8 +1,5 @@
-import 'package:attendance/AppColors/app_colors.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:fl_chart/fl_chart.dart';
-import '../Employee/model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AttendanceScreen extends StatefulWidget {
   const AttendanceScreen({super.key});
@@ -12,80 +9,56 @@ class AttendanceScreen extends StatefulWidget {
 }
 
 class _AttendanceScreenState extends State<AttendanceScreen> {
-  int present = 0, absent = 0, leaves = 0;
+  bool isMarked = false;
+  String todayKey = "";
 
   @override
   void initState() {
     super.initState();
-    EmployeeData.loadData().then((_) {
-      _calculateChartData();
-      setState(() {});
+    todayKey = _getTodayKey();
+    _checkAttendance();
+  }
+
+  String _getTodayKey() {
+    final now = DateTime.now();
+    return "attendance_${now.year}-${now.month}-${now.day}";
+  }
+
+  Future<void> _checkAttendance() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      isMarked = prefs.getBool(todayKey) ?? false;
     });
   }
 
-  void _calculateChartData() {
-    final employees = EmployeeData.employeeList;
-    present = employees.where((e) => e.isPresent).length;
-    absent = employees.where((e) => !e.isPresent).length;
-    leaves = employees.fold(0, (sum, e) => sum + EmployeeData.getMonthlyAbsences(e));
+  Future<void> _markAttendance() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(todayKey, true);
+    setState(() {
+      isMarked = true;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("✅ Attendance marked for today")),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final employees = EmployeeData.employeeList;
-
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(onPressed: () => Get.back(), icon: const Icon(Icons.arrow_back_ios,color: AppColors.whiteTheme,)),
-        title: const Text('Attendance Summary',style: TextStyle(color: AppColors.whiteTheme),),
-        backgroundColor: AppColors.appColor,
+        title: const Text('Daily Attendance'),
+        backgroundColor: Colors.blue,
       ),
-      body: Column(
-        children: [
-          const SizedBox(height: 20),
-          const Text('Attendance Chart', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 10),
-          SizedBox(
-            height: 200,
-            child: PieChart(
-              PieChartData(
-                sections: [
-                  PieChartSectionData(value: present.toDouble(), title: 'Present', color: Colors.green, radius: 50),
-                  PieChartSectionData(value: absent.toDouble(), title: 'Absent', color: Colors.red, radius: 50),
-                  PieChartSectionData(value: leaves.toDouble(), title: 'Leaves', color: Colors.orange, radius: 50),
-                ],
-                centerSpaceRadius: 30,
-                sectionsSpace: 2,
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-          // const Divider(),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 8.0),
-            child: Text('Employee List', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          ),
-          Expanded(
-            child: ListView.builder(
-              itemCount: employees.length,
-              itemBuilder: (context, index) {
-                final employee = employees[index];
-                return Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: ListTile(
-                    leading: Icon(
-                      employee.isPresent ? Icons.check_circle : Icons.cancel,
-                      color: employee.isPresent ? AppColors.greenColor : AppColors.redColor,
-                    ),
-                    title: Text(employee.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: Text(employee.isPresent ? 'Present' : 'Absent'),
-                    trailing: Text('Leaves: ${EmployeeData.getMonthlyAbsences(employee)}'),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
+      body: Center(
+        child: isMarked
+            ? const Text(
+          "✅ Your attendance is already marked today!",
+          style: TextStyle(fontSize: 18, color: Colors.green),
+        )
+            : ElevatedButton(
+          onPressed: _markAttendance,
+          child: const Text("Mark Attendance"),
+        ),
       ),
     );
   }

@@ -1,6 +1,6 @@
 import 'dart:developer';
-
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -10,13 +10,26 @@ class SaveLpBreaksController extends GetxController {
   var isLoading = false.obs;
   var responseModel = SaveLpBreaksModels().obs;
 
+  final storage = GetStorage();
+
+
   Future<void> saveLpBreaks(Map<String, dynamic> body) async {
     isLoading.value = true;
 
-    print('🟡 [SaveLpBreaksController] Request initiated...');
-    print('📤 Request Body: ${jsonEncode(body)}');
+    log(' [SaveLpBreaksController] Request initiated...');
 
     try {
+      // Get the stored userId
+      final userId = storage.read('userId');
+      if (userId == null) {
+        log('userId not found in storage!');
+        return;
+      }
+
+      body['userId'] = userId;
+
+      print('Request Body: ${jsonEncode(body)}');
+
       final response = await http.post(
         Uri.parse("https://crolahore.azurewebsites.net/api/Master/SaveLpBreaks"),
         headers: {'Content-Type': 'application/json'},
@@ -36,10 +49,10 @@ class SaveLpBreaksController extends GetxController {
         log(' Error Response Body: ${response.body}');
       }
     } catch (e) {
-      log(' Exception occurred: $e');
+      log('Exception occurred: $e');
     } finally {
       isLoading.value = false;
-      log(' [SaveLpBreaksController] Request completed.');
+      log('✅ [SaveLpBreaksController] Request completed.');
     }
   }
 }

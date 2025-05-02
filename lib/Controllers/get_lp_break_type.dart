@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -9,7 +11,6 @@ class GetLpBreakTypesController extends GetxController {
 
   var breakTypes = <GetLpBreakTypesModel>[].obs;
 
-  // Method to fetch the break types from the API
   Future<void> fetchLpBreakTypes() async {
     isLoading.value = true;
     try {
@@ -22,12 +23,12 @@ class GetLpBreakTypesController extends GetxController {
         final List<dynamic> jsonData = jsonDecode(response.body);
 
         breakTypes.value = jsonData.map((data) => GetLpBreakTypesModel.fromJson(data)).toList();
-        print('Break Types: ${breakTypes}');
+        log('Break Types: ${breakTypes}');
       } else {
-        print('Failed to load break types: ${response.statusCode}');
+        log('Failed to load break types: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error while fetching break types: $e');
+      log('Error while fetching break types: $e');
     } finally {
       isLoading.value = false;
     }
