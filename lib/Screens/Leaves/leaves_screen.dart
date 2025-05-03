@@ -27,8 +27,12 @@ class _LeaveScreenState extends State<LeaveScreen> {
   final Map<String, Timer> _cancelTimers = {};
   final LeaveController leaveController = Get.put(LeaveController());
   final leaveStatusController = Get.put(GetLpLeaveStatusController());
-  final GetLeavesController getleavesController = Get.put(GetLeavesController());
-  final GetLeaveTypesController leaveTypesController = Get.put(GetLeaveTypesController());
+  final GetLeavesController getleavesController = Get.put(
+    GetLeavesController(),
+  );
+  final GetLeaveTypesController leaveTypesController = Get.put(
+    GetLeaveTypesController(),
+  );
 
   @override
   void initState() {
@@ -68,7 +72,9 @@ class _LeaveScreenState extends State<LeaveScreen> {
   }
 
   int _getLeaveTypeId(String leaveType) {
-    final selected = leaveTypesController.leaveTypes.firstWhereOrNull((e) => e.name == leaveType);
+    final selected = leaveTypesController.leaveTypes.firstWhereOrNull(
+      (e) => e.name == leaveType,
+    );
     return selected?.id ?? 0;
   }
 
@@ -194,7 +200,10 @@ class _LeaveScreenState extends State<LeaveScreen> {
                 return const Center(child: CircularProgressIndicator());
               }
               return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10),
                   color: Colors.grey[200],
@@ -203,14 +212,18 @@ class _LeaveScreenState extends State<LeaveScreen> {
                 child: DropdownButton<String>(
                   isExpanded: true,
 
-                  hint: Text('Select Leave Type', style: GoogleFonts.poppins(fontSize: 16)),
+                  hint: Text(
+                    'Select Leave Type',
+                    style: GoogleFonts.poppins(fontSize: 16),
+                  ),
                   value: _selectedLeaveType,
-                  items: leaveTypesController.leaveTypes.map((leave) {
-                    return DropdownMenuItem<String>(
-                      value: leave.name,
-                      child: Text(leave.name, style: GoogleFonts.poppins()),
-                    );
-                  }).toList(),
+                  items:
+                      leaveTypesController.leaveTypes.map((leave) {
+                        return DropdownMenuItem<String>(
+                          value: leave.name,
+                          child: Text(leave.name, style: GoogleFonts.poppins()),
+                        );
+                      }).toList(),
                   onChanged: (value) {
                     setState(() {
                       _selectedLeaveType = value;
@@ -238,7 +251,10 @@ class _LeaveScreenState extends State<LeaveScreen> {
                     borderRadius: BorderRadius.circular(10),
                     borderSide: BorderSide.none,
                   ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                 ),
                 maxLines: 3,
               ),
@@ -269,7 +285,8 @@ class _LeaveScreenState extends State<LeaveScreen> {
               const SizedBox(height: 20),
             ],
 
-            if (_submittedLeaves.isNotEmpty || getleavesController.leaves.isNotEmpty)
+            if (_submittedLeaves.isNotEmpty ||
+                getleavesController.leaves.isNotEmpty)
               Obx(() {
                 if (getleavesController.isLoading.value) {
                   return const Center(child: Text(""));
@@ -299,13 +316,25 @@ class _LeaveScreenState extends State<LeaveScreen> {
                       color: AppColors.appColor,
                       margin: const EdgeInsets.symmetric(vertical: 6),
                       child: ListTile(
-                        title: Text('Type: ${leave.type}', style: TextStyle(fontSize: 16,color: AppColors.whiteTheme)),
-                        subtitle: Text("${leave.reason}", style: const TextStyle(color: AppColors.whiteTheme)),
+                        title: Text(
+                          'Type: ${leave.type}',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: AppColors.whiteTheme,
+                          ),
+                        ),
+                        subtitle: Text(
+                          "${leave.reason}",
+                          style: const TextStyle(color: AppColors.whiteTheme),
+                        ),
                         trailing: TextButton(
                           onPressed: () {
                             // Future: Call cancel API here if needed.
                           },
-                          child: const Text('Cancel leave', style: TextStyle(color: AppColors.blackColor)),
+                          child: const Text(
+                            'Cancel leave',
+                            style: TextStyle(color: AppColors.blackColor),
+                          ),
                         ),
                       ),
                     );

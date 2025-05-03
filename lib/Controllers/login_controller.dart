@@ -3,16 +3,16 @@ import 'dart:developer';
 import 'package:attendance/Screens/Home/home_screen.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../Models/login_model.dart';
-import '../Screens/BottonNavScreen/bottom_nav_screen.dart';
 import '../Widgets/snack_bar.dart';
-import '../prefs/sharedPreferences.dart';
 
 class LoginController extends GetxController {
   var isLoading = false.obs;
 
   Future<LoginModel?> loginUser(String username) async {
-     isLoading(true);
+    isLoading(true);
     try {
       final response = await http.get(
         Uri.parse('https://crolahore.azurewebsites.net/api/Master/GetLpUserByUsername?username=$username'),
@@ -22,18 +22,20 @@ class LoginController extends GetxController {
         var responseData = jsonDecode(response.body);
 
         if (responseData.isNotEmpty && responseData[0]['ID'] != null) {
-          final String id = responseData[0]['ID'].toString();
-          log('ID in login controller: $id');
-          log("Login Id $id");
-          // Store ID in SharedPreferences
-          await getUserId();
+          final int userId = responseData[0]['ID'];
+          log('Login User ID: $userId');
 
+          //  Save userId to SharedPreferences
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setInt('userId', userId);
+          log('User ID saved to SharedPreferences: $userId');
 
           Snackbar.snackBar('Line UP', 'Login Successfully!');
-          Get.offAll(HomeScreen());
+          Get.offAll(() => HomeScreen());
+
           return LoginModel.fromJson(responseData[0]);
         } else {
-          Snackbar.snackBar('Line Up', 'User not found ${response.statusCode}');
+          Snackbar.snackBar('Line Up', 'User not found');
           return null;
         }
       } else {
@@ -41,8 +43,8 @@ class LoginController extends GetxController {
         return null;
       }
     } catch (e) {
-      log('Error: $e');
-      Get.snackbar('Error', "An error occurred!");
+      log('Login Error: $e');
+      Get.snackbar('Error', 'An error occurred!');
       return null;
     } finally {
       isLoading(false);

@@ -4,10 +4,9 @@ import 'package:attendance/Screens/Home/home_screen.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // for userId storage
 
 import '../Models/signup_model.dart';
-
-import '../Screens/BottonNavScreen/bottom_nav_screen.dart';
 import '../Widgets/snack_bar.dart';
 
 class SignupController extends GetxController {
@@ -22,9 +21,6 @@ class SignupController extends GetxController {
   final userName = TextEditingController();
   final password = TextEditingController();
   final confirmPassword = TextEditingController();
-
-  // Removed registrationDate controller
-  // Removed status and role variables
 
   var gender = "Male".obs;
   var showPassword = false.obs;
@@ -81,7 +77,6 @@ class SignupController extends GetxController {
     return null;
   }
 
-  // Updated registerUser method - no longer needs registration date, status, or role
   void registerUser() async {
     if (formKey.currentState!.validate()) {
       try {
@@ -117,7 +112,6 @@ class SignupController extends GetxController {
     try {
       log('Attempting to register: $username');
 
-      // Get current date in SQL Server compatible format
       String currentDate = DateTime.now().toIso8601String().split('T')[0];
 
       final response = await http.post(
@@ -137,7 +131,6 @@ class SignupController extends GetxController {
           'UserName': username,
           'Password': password,
           'RegDate': currentDate,
-          // Default values for status and role if the backend requires them
           'Status': "1",
           'Role': "0",
         }),
@@ -149,19 +142,25 @@ class SignupController extends GetxController {
       if (response.statusCode == 200) {
         var responseData = jsonDecode(response.body);
         log('Response data: $responseData');
-        log("THe date of user signUp $currentDate");
 
         if (responseData['Status'] == 1) {
-          // Success case
+          // Get userId from response (make sure backend is sending this!)
+          int? userId = responseData['UserId'];
+
+          // Store userId using SharedPreferences
+          final prefs = await SharedPreferences.getInstance();
+          if (userId != null) {
+            await prefs.setInt('userId', userId);
+            log("User ID saved: $userId");
+          }
+
           Snackbar.snackBar('LineUp', 'Registration Successful!');
           Get.offAll(() => HomeScreen());
+
           return SignUpModel.fromJson(responseData);
         } else {
-          // Handle specific error messages from server
-          String errorMessage =
-              responseData['Message'] ?? 'Registration failed';
+          String errorMessage = responseData['Message'] ?? 'Registration failed';
 
-          // Provide user-friendly messages for known errors
           if (errorMessage.contains("UK_LpUsers_Mobile")) {
             errorMessage = 'This mobile number is already registered';
           } else if (errorMessage.contains("UK_LpUsers_Email")) {

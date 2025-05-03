@@ -25,7 +25,8 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
   bool isConnectedToOfficeWifi = false;
   bool isLoading = false;
 
-  final String officeWifiSSID = "TechBees-2.4G";
+  // Updated to include both office Wi-Fi and Guest network
+  final List<String> allowedWifiNetworks = ["TechBees-2.4G", "Guest"];
 
   @override
   void initState() {
@@ -70,11 +71,16 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
 
         debugPrint('Detected Wi-Fi Name: $wifiName');
 
-        setState(() {
-          isConnectedToOfficeWifi = wifiName != null &&
-              (wifiName.replaceAll('"', '') == officeWifiSSID ||
-                  wifiName.startsWith("TechBees"));
-        });
+        // Updated Wi-Fi check logic to include multiple networks
+        if (wifiName != null) {
+          final cleanWifiName = wifiName.replaceAll('"', '');
+          setState(() {
+            isConnectedToOfficeWifi = allowedWifiNetworks.contains(cleanWifiName) ||
+                cleanWifiName.startsWith("TechBees");
+          });
+        } else {
+          setState(() => isConnectedToOfficeWifi = false);
+        }
       } else {
         setState(() => isConnectedToOfficeWifi = false);
       }
@@ -190,7 +196,7 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
               ),
             ),
 
-            // Wi-Fi Status Indicator
+            // Wi-Fi Status Indicator with updated message
             Container(
               color: isConnectedToOfficeWifi ? Colors.green : Colors.red,
               padding: const EdgeInsets.symmetric(vertical: 8),
@@ -205,8 +211,8 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
                   const SizedBox(width: 8),
                   Text(
                     isConnectedToOfficeWifi
-                        ? "Connected to Office Wi-Fi"
-                        : "Not Connected to Office Wi-Fi",
+                        ? "Connected to Approved Wi-Fi"
+                        : "Not Connected to Approved Wi-Fi",
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -221,57 +227,57 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
               padding: const EdgeInsets.all(20.0),
               child: Column(
                 children: [
-                  // Employee Card
-                  // Card(
-                  //   elevation: 4,
-                  //   shape: RoundedRectangleBorder(
-                  //     borderRadius: BorderRadius.circular(15),
-                  //   ),
-                  //   child: Padding(
-                  //     padding: const EdgeInsets.all(20.0),
-                  //     child: Row(
-                  //       children: [
-                  //         CircleAvatar(
-                  //           radius: 35,
-                  //           backgroundColor: AppColors.orangeShade,
-                  //           child: Text(
-                  //             widget.userName.isNotEmpty
-                  //                 ? widget.userName[0].toUpperCase()
-                  //                 : "U",
-                  //             style: const TextStyle(
-                  //               color: Colors.white,
-                  //               fontSize: 28,
-                  //               fontWeight: FontWeight.bold,
-                  //             ),
-                  //           ),
-                  //         ),
-                  //         const SizedBox(width: 20),
-                  //         Expanded(
-                  //           child: Column(
-                  //             crossAxisAlignment: CrossAxisAlignment.start,
-                  //             children: [
-                  //               Text(
-                  //                 widget.userName,
-                  //                 style: const TextStyle(
-                  //                   fontSize: 20,
-                  //                   fontWeight: FontWeight.bold,
-                  //                 ),
-                  //               ),
-                  //               const SizedBox(height: 5),
-                  //               Text(
-                  //                 "Employee ID: EMP-${widget.userName.hashCode.abs()}",
-                  //                 style: TextStyle(
-                  //                   color: Colors.grey[600],
-                  //                   fontSize: 14,
-                  //                 ),
-                  //               ),
-                  //             ],
-                  //           ),
-                  //         ),
-                  //       ],
-                  //     ),
-                  //   ),
-                  // ),
+                  // Employee Card - Uncommented and implemented
+                  Card(
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 35,
+                            backgroundColor: AppColors.orangeShade,
+                            child: Text(
+                              widget.userName.isNotEmpty
+                                  ? widget.userName[0].toUpperCase()
+                                  : "U",
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 20),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  widget.userName,
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 5),
+                                Text(
+                                  "Employee ID: EMP-${widget.userName.hashCode.abs()}",
+                                  style: TextStyle(
+                                    color: Colors.grey[600],
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
 
                   const SizedBox(height: 30),
 
@@ -410,7 +416,7 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
                             Padding(
                               padding: const EdgeInsets.only(top: 15),
                               child: Text(
-                                "Please connect to office Wi-Fi to mark attendance",
+                                "Please connect to an approved Wi-Fi network to mark attendance",
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   color: Colors.red[700],
@@ -426,7 +432,7 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
 
                   const SizedBox(height: 20),
 
-                  // Stats Card
+                  // Stats Card - Now with dynamic month name
                   Card(
                     elevation: 4,
                     shape: RoundedRectangleBorder(
@@ -437,9 +443,9 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            "This Month's Statistics",
-                            style: TextStyle(
+                          Text(
+                            "${DateFormat('MMMM').format(currentDate)}'s Statistics",
+                            style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
                             ),

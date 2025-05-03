@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'dart:math';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import '../Models/get_leaves_model.dart';
+import '../prefs/sharedPreferences.dart';
 
 class GetLeavesController extends GetxController {
   var leaves = <GetLeavesModel>[].obs;
@@ -21,7 +23,8 @@ class GetLeavesController extends GetxController {
     try {
       // Updated URL to use the correct controller name
       // Based on error message, 'LpRequests' is not a valid controller
-      final userId = 1; // or whatever value you get from login/session
+      final userId = await getUserId();
+      log(userId as num);
       final response = await http.get(
         Uri.parse("https://crolahore.azurewebsites.net/api/Master/GetLpLeavesByUserID?UserID=1"),
         headers: {
