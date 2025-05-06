@@ -1,4 +1,3 @@
-
 import 'package:attendance/Screens/Auth/signup.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -8,7 +7,6 @@ import '../../Widgets/custom_text_field.dart';
 import '../../Widgets/text_widget.dart';
 import '../BottonNavScreen/bottom_nav_screen.dart';
 import 'forget_password.dart';
-
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -30,119 +28,141 @@ class _LoginScreenState extends State<LoginScreen> {
     double width = MediaQuery.of(context).size.width;
 
     return Scaffold(
-      backgroundColor: AppColors.whiteTheme,
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(height: height * 0.04),
-                CustomText(
-                  text: "Login",
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.orangeShade,
-                ),
-                SizedBox(height: height * 0.025),
-                CustomTextField(
-                  controller: userController,
-                  hintText: "Username",
-                  prefixIcon: Icons.person,
-                ),
-                SizedBox(height: height * 0.025),
-                CustomTextField(
-                  controller: passwordController,
-                  hintText: "Password",
-                  prefixIcon: Icons.lock,
-                  obscureText: true,
-                ),
-                SizedBox(height: height * 0.025),
-                Obx(() => GestureDetector(
-                  onTapDown: (_) => setState(() => _buttonPressed = true),
-                  onTapUp: (_) => setState(() => _buttonPressed = false),
-                  onTapCancel: () => setState(() => _buttonPressed = false),
-                  onTap: () {
-                    if (!loginController.isLoading.value) {
-                      loginController.loginUser(
-                        userController.text.trim(), // Username
-                        // passwordController.text.trim(), // Password
-                      );
-                    }
-                  },
-                  child: AnimatedContainer(
-                    duration: Duration(milliseconds: 100),
-                    height: height * 0.06,
-                    width: width,
-                    decoration: BoxDecoration(
-                      color: AppColors.blackColor,
-                      borderRadius: BorderRadius.circular(15),
-                      boxShadow: _buttonPressed
-                          ? []
-                          : [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
-                          blurRadius: 10,
-                          offset: Offset(0, 5),
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [AppColors.orangeShade.withOpacity(0.8), Colors.white],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: SafeArea(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: height * 0.04),
+                  Center(
+                    child: Hero(
+                      tag: 'logo',
+                      child: Image.asset("assets/images/applogo.jpeg", height: 100),
+                    ),
+                  ),
+                  SizedBox(height: height * 0.13),
+                  Center(
+                    child: Card(
+                      elevation: 8,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      child: Padding(
+                        padding: const EdgeInsets.all(20.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            CustomText(
+                              text: "Login",
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.orangeShade,
+                            ),
+                            SizedBox(height: height * 0.025),
+                            CustomTextField(
+                              controller: userController,
+                              hintText: "Username",
+                              prefixIcon: Icons.person,
+                            ),
+                            SizedBox(height: height * 0.025),
+                            CustomTextField(
+                              controller: passwordController,
+                              hintText: "Password",
+                              prefixIcon: Icons.lock,
+                              obscureText: true,
+                            ),
+                            SizedBox(height: height * 0.025),
+                            Material(
+                              borderRadius: BorderRadius.circular(15),
+                              elevation: 6,
+                              child: InkWell(
+                                onTap: () {
+                                  if (!loginController.isLoading.value) {
+                                    loginController.loginUser(
+                                      userController.text.trim(),
+                                      // passwordController.text.trim(),
+                                    );
+                                  }
+                                },
+                                borderRadius: BorderRadius.circular(15),
+                                child: Container(
+                                  height: height * 0.06,
+                                  width: width,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(15),
+                                    gradient: LinearGradient(
+                                      colors: [AppColors.orangeShade, Colors.deepOrangeAccent],
+                                    ),
+                                  ),
+                                  child: Center(
+                                    child: Obx(() =>
+                                    loginController.isLoading.value
+                                        ? CircularProgressIndicator(color: Colors.white)
+                                        : CustomText(
+                                      text: "Login",
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: height * 0.02),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: InkWell(
+                                onTap: () {
+                                  Get.to(ForgotPasswordScreen());
+                                },
+                                child: Text(
+                                  "Forget Password",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.appColor,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: height * 0.02),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text("Don't have an account? "),
+                                InkWell(
+                                  onTap: () {
+                                    Get.to(SignupScreen());
+                                  },
+                                  child: Text(
+                                    "Signup",
+                                    style: TextStyle(
+                                      color: AppColors.orangeShade,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
-                      ],
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          AppColors.orangeShade,
-                          AppColors.orangeShade,
-                        ],
-                      ),
-                    ),
-                    child: Center(
-                      child: loginController.isLoading.value
-                          ? CircularProgressIndicator(color: Colors.white)
-                          : CustomText(
-                        text: "Login",
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.whiteTheme,
                       ),
                     ),
                   ),
-                )),                SizedBox(height: height * 0.010),
-                Align(
-                  alignment: Alignment(0.9, 5),
-                  child: InkWell(
-                    onTap: () {
-                      Get.to(ForgotPasswordScreen());
-                    },
-                    child: Text(
-                      "Forget Password",
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.appColor),
-                    ),
-                  ),
-                ),
-                SizedBox(height: height * 0.010),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text("Don't have an account"),
-                    SizedBox(width: width * 0.020),
-                    InkWell(
-                      onTap: () {
-                        Get.to(SignupScreen());
-                      },
-                      child: Text(
-                        "Signup",
-                        style: TextStyle(
-                            color: AppColors.orangeShade,
-                            fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: height * 0.04),
-              ],
+                  SizedBox(height: height * 0.04),
+                ],
+              ),
             ),
           ),
         ),

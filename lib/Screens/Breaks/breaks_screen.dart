@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
+import 'package:attendance/prefs/sharedPreferences.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:get/get.dart';
 
 import '../../AppColors/app_colors.dart';
+import '../../Controllers/get_breaks_controller.dart';
 import '../../Controllers/get_lp_break_type.dart';
 import '../../Controllers/save_lp_breaks_controller.dart';
 
@@ -28,6 +30,8 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
   GetLpBreakTypesController getLpBreakTypesController = Get.put(
     GetLpBreakTypesController(),
   );
+  final GetBreaksController controller = Get.put(GetBreaksController());
+
   Timer? _quickTimer;
   Timer? _mealTimer;
   int quickElapsedSeconds = 0;
@@ -36,12 +40,31 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
   Map<String, DateTime?> breakTypeStartTimes = {};
   Map<String, Timer?> breakTypeTimers = {};
   Map<String, bool> activeBreaks = {};
+  String _calculateDuration(String? startDate, String? endDate) {
+    if (startDate == null || endDate == null) {
+      return "Invalid dates";
+    }
+
+    try {
+      DateTime start = DateTime.parse(startDate);
+      DateTime end = DateTime.parse(endDate);
+      Duration duration = end.difference(start);
+
+      // Return formatted duration in minutes
+      return '${duration.inMinutes} mins';
+    } catch (e) {
+      return 'Error calculating duration';
+    }
+  }
+
 
   @override
   void initState() {
     super.initState();
     loadBreakRecords();
     loadBreakStatus();
+    controller.fetchBreaks(1);
+
     log('BreakTypeController Initialized');
     getLpBreakTypesController.fetchLpBreakTypes();
   }
@@ -526,7 +549,6 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
   bool isBreakActiveByType(String breakType) {
     return activeBreaks[breakType] ?? false;
   }
-
   @override
   void dispose() {
     _quickTimer?.cancel();
@@ -828,46 +850,52 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
+
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child:
-                        breakRecords.isEmpty
-                            ? const Center(child: Text("No break records yet"))
-                            : ListView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: breakRecords.length,
-                              itemBuilder: (context, index) {
-                                final record = breakRecords[index];
-                                return Card(
-                                  color: AppColors.appColor,
-                                  child: ListTile(
-                                    title: Text(
-                                      record['type'],
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.whiteTheme,
-                                      ),
-                                    ),
-                                    subtitle: Text(
-                                      "Start: ${record['start']}\nEnd: ${record['end']}",
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        color: AppColors.whiteTheme,
-                                      ),
-                                    ),
-                                    trailing: Text(
-                                      formatTime(record['duration']),
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.whiteTheme,
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              },
+                    child: Obx(() {
+                      if (controller.isLoading.value) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+
+                      if (controller.breaksList.isEmpty) {
+                        return const Center(child: Text("No break records yet"));
+                      }
+
+                      return ListView.builder(
+                        itemCount: controller.breaksList.length,
+                        itemBuilder: (context, index) {
+                          final record = controller.breaksList[index];
+
+                          return Card(
+                            color: AppColors.appColor,
+                            child: ListTile(
+                              title: Text(
+                                record.type ?? "Unknown",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.whiteTheme,
+                                ),
+                              ),
+                              subtitle: Text(
+                                "Start: ${record.startDate}\nEnd: ${record.endDate}",
+                                style: TextStyle(color: AppColors.whiteTheme),
+                              ),
+                              trailing: Text(
+                                _calculateDuration(record.startDate, record.endDate),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.whiteTheme,
+                                ),
+                              ),
                             ),
-                  ),
+                          );
+                        },
+                      );
+                    }),
+                  )
+
+
                 ],
               ),
             ),

@@ -5,7 +5,13 @@ class GetBreaksModel {
   String? endDate;
   int? userID;
 
-  GetBreaksModel({this.id, this.type, this.startDate, this.endDate, this.userID});
+  GetBreaksModel({
+    this.id,
+    this.type,
+    this.startDate,
+    this.endDate,
+    this.userID,
+  });
 
   GetBreaksModel.fromJson(Map<String, dynamic> json) {
     id = json['ID'];
@@ -16,12 +22,12 @@ class GetBreaksModel {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = {};
-    data['ID'] = id;
-    data['Type'] = type;
-    data['StartDate'] = startDate;
-    data['EndDate'] = endDate;
-    data['UserID'] = userID;
-    return data;
+    return {
+      'ID': id,
+      'Type': type,
+      'StartDate': startDate,
+      'EndDate': endDate,
+      'UserID': userID,
+    };
   }
 }

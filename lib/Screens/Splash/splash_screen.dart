@@ -1,4 +1,5 @@
 import 'package:attendance/AppColors/app_colors.dart';
+import 'package:attendance/Screens/Auth/login_screen.dart';
 import 'package:flutter/material.dart';
 import '../Auth/signup.dart';
 
@@ -25,7 +26,7 @@ class _SplashScreenState extends State<SplashScreen>
     Future.delayed(Duration(seconds: 3), () {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => SignupScreen()),
+        MaterialPageRoute(builder: (context) => LoginScreen()),
       );
     });
   }

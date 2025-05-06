@@ -32,7 +32,7 @@ class GetLeavesController extends GetxController {
 
       final response = await http.get(
         Uri.parse(
-          "https://crolahore.azurewebsites.net/api/Master/GetLpLeavesByUserID?UserID=$userId",
+          "https://crolahore.azurewebsites.net/api/Master/GetLpLeavesByUserID?UserID=1",
         ),
         headers: {
           'Content-Type': 'application/json',
