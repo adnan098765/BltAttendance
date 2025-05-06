@@ -13,7 +13,7 @@ class GetBreaksController extends GetxController {
   Future<void> fetchBreaks(int userId) async {
     isLoading.value = true;
     final url = Uri.parse(
-        'https://crolahore.azurewebsites.net/api/Master/GetLpBreaksByUserID?UserID=${userId}');
+        'https://crolahore.azurewebsites.net/api/Master/GetLpBreaksByUserID?UserID=5}');
 
     log('Fetching breaks for userId: $userId');
     log('Request URL: $url');
@@ -22,17 +22,16 @@ class GetBreaksController extends GetxController {
       final response = await http.get(url);
       log('Response status: ${response.statusCode}');
       log('Response body: ${response.body}');
-      print('[log] Response Body: ${response.body}'); // Log response body
 
       if (response.statusCode == 200) {
         final List<dynamic> jsonList = jsonDecode(response.body);
-        breaksList.value =
-            jsonList.map((json) => GetBreaksModel.fromJson(json)).toList();
+        breaksList.value = jsonList.map((json) => GetBreaksModel.fromJson(json)).toList();
 
         log('Fetched ${breaksList.length} breaks');
       } else {
         Get.snackbar('Error', 'Failed to fetch breaks: ${response.statusCode}');
         log('Failed to fetch breaks with status: ${response.statusCode}');
+        log('Response body: ${response.body}');
       }
     } catch (e) {
       Get.snackbar('Exception', 'Breaks fetch error: $e');
@@ -42,4 +41,5 @@ class GetBreaksController extends GetxController {
       log('Loading finished');
     }
   }
+
 }

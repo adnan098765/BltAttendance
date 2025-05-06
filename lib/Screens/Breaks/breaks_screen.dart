@@ -63,7 +63,7 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
     super.initState();
     loadBreakRecords();
     loadBreakStatus();
-    controller.fetchBreaks(1);
+    controller.fetchBreaks(5);
 
     log('BreakTypeController Initialized');
     getLpBreakTypesController.fetchLpBreakTypes();
