@@ -65,9 +65,26 @@
 //   final prefs = await SharedPreferences.getInstance();
 //   await prefs.remove(token);
 // }
+import 'dart:convert';
+
 import 'package:shared_preferences/shared_preferences.dart';
+
+Future<void> setUserId(int userId) async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setInt('userId', userId);
+}
 
 Future<int?> getUserId() async {
   final prefs = await SharedPreferences.getInstance();
-  return prefs.getInt('userId'); // already stored as int
+  return prefs.getInt('userId');
+}
+Future<void> setUserProfile(Map<String, dynamic> profile) async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString('userProfile', jsonEncode(profile));
+}
+
+Future<Map<String, dynamic>?> getUserProfile() async {
+  final prefs = await SharedPreferences.getInstance();
+  final profileString = prefs.getString('userProfile');
+  return profileString != null ? jsonDecode(profileString) : null;
 }

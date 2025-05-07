@@ -7,7 +7,6 @@ import '../../Widgets/custom_text_field.dart';
 import '../../Widgets/text_widget.dart';
 import 'login_screen.dart';
 
-
 class SignupScreen extends StatelessWidget {
   SignupScreen({super.key});
 
@@ -15,173 +14,217 @@ class SignupScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    double height = MediaQuery.of(context).size.height;
+    double width = MediaQuery.of(context).size.width;
+
     return Scaffold(
-      backgroundColor: AppColors.whiteTheme,
-      body: Form(
-        key: controller.formKey,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 20),
-              Center(
-                child: CustomText(
-                  text: "Registration Form",
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.orangeShade,
-                ),
-              ),
-              const SizedBox(height: 30),
-
-              // Full Name
-              CustomTextField(
-                controller: controller.fullName,
-                hintText: "Full Name",
-                prefixIcon: Icons.person,
-                validator: (value) => value?.isEmpty ?? true ? 'Required field' : null,
-              ),
-              const SizedBox(height: 15),
-              CustomTextField(
-                controller: controller.fatherName,
-                hintText: "Father Name",
-                prefixIcon: Icons.person,
-                validator: (value) => value?.isEmpty ?? true ? 'Required field' : null,
-              ),
-              const SizedBox(height: 15),
-
-              // Gender Dropdown
-              _buildGenderDropdown(),
-              const SizedBox(height: 15),
-
-              // Phone Number
-              CustomTextField(
-                controller: controller.phoneNumber,
-                hintText: "Mobile Number",
-                prefixIcon: Icons.phone,
-                keyboardType: TextInputType.phone,
-                validator: controller.validatePhone,
-              ),
-              const SizedBox(height: 15),
-
-              // CNIC
-              CustomTextField(
-                controller: controller.cnic,
-                hintText: "CNIC (without dashes)",
-                prefixIcon: Icons.credit_card,
-                keyboardType: TextInputType.number,
-                validator: controller.validateCNIC,
-              ),
-              const SizedBox(height: 15),
-
-              // Email
-              CustomTextField(
-                controller: controller.email,
-                hintText: "Email",
-                prefixIcon: Icons.email,
-                keyboardType: TextInputType.emailAddress,
-                validator: controller.validateEmail,
-              ),
-              const SizedBox(height: 15),
-
-              // Address
-              CustomTextField(
-                controller: controller.address,
-                hintText: "Address",
-                prefixIcon: Icons.location_on,
-                validator: (value) => value?.isEmpty ?? true ? 'Required field' : null,
-              ),
-              const SizedBox(height: 15),
-
-              // Username
-              CustomTextField(
-                controller: controller.userName,
-                hintText: "Username",
-                prefixIcon: Icons.person_outline,
-                validator: (value) => value?.isEmpty ?? true ? 'Required field' : null,
-
-              ),
-              const SizedBox(height: 15),
-
-              // Password Field
-              Obx(() => CustomTextField(
-                controller: controller.password,
-                hintText: "Password",
-                prefixIcon: Icons.lock,
-                suffixIcon: controller.showPassword.value ? Icons.visibility : Icons.visibility_off,
-                obscureText: !controller.showPassword.value,
-                validator: controller.validatePassword,
-                onSuffixIconPressed: () => controller.showPassword.toggle(),
-              )),
-              const SizedBox(height: 15),
-
-              // Confirm Password Field
-              Obx(() => CustomTextField(
-                controller: controller.confirmPassword,
-                hintText: "Confirm Password",
-                prefixIcon: Icons.lock,
-                suffixIcon: controller.showConfirmPassword.value ? Icons.visibility : Icons.visibility_off,
-                obscureText: !controller.showConfirmPassword.value,
-                validator: controller.validateConfirmPassword,
-                onSuffixIconPressed: () => controller.showConfirmPassword.toggle(),
-              )),
-              // const SizedBox(height: 15),
-              // _buildRegistrationDateField(),
-              // const SizedBox(height: 15),
-
-              // Status Dropdown
-              // _buildStatusDropdown(),
-              const SizedBox(height: 15),
-
-              // Role Dropdown
-              // _buildRoleDropdown(),
-
-
-              Obx(() => ElevatedButton(
-                onPressed: controller.isLoading.value ? null : controller.registerUser,
-                style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.all(AppColors.orangeShade),
-                  foregroundColor: MaterialStateProperty.all(Colors.white),
-                  minimumSize: MaterialStateProperty.all(const Size(double.infinity, 50)),
-                  shape: MaterialStateProperty.all(
-                    RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-
-                child: controller.isLoading.value
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text(
-                  "Register",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              )),
-              const SizedBox(height: 15),
-
-              // Login Prompt
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text("Already have an account?"),
-                  TextButton(
-                    onPressed: () => Get.off(() => LoginScreen()),
-                    child: Text(
-                      "Login",
-                      style: TextStyle(
-                        color: AppColors.orangeShade,
-                        fontWeight: FontWeight.bold,
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [AppColors.orangeShade.withOpacity(0.8), Colors.white],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: Form(
+          key: controller.formKey,
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: SafeArea(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: height * 0.02),
+                    Center(
+                      child: Hero(
+                        tag: 'logo',
+                        child: Image.asset("assets/images/applogo.jpeg", height: 80),
                       ),
                     ),
-                  ),
-                ],
+                    SizedBox(height: height * 0.04),
+                    Center(
+                      child: Card(
+                        elevation: 8,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        child: Padding(
+                          padding: const EdgeInsets.all(20.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              CustomText(
+                                text: "Registration Form",
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.orangeShade,
+                              ),
+                              SizedBox(height: height * 0.025),
+
+                              // Full Name
+                              CustomTextField(
+                                controller: controller.fullName,
+                                hintText: "Full Name",
+                                prefixIcon: Icons.person,
+                                validator: (value) => value?.isEmpty ?? true ? 'Required field' : null,
+                              ),
+                              SizedBox(height: height * 0.02),
+
+                              // Father Name
+                              CustomTextField(
+                                controller: controller.fatherName,
+                                hintText: "Father Name",
+                                prefixIcon: Icons.person,
+                                validator: (value) => value?.isEmpty ?? true ? 'Required field' : null,
+                              ),
+                              SizedBox(height: height * 0.02),
+
+                              // Gender Dropdown
+                              _buildGenderDropdown(),
+                              SizedBox(height: height * 0.02),
+
+                              // Phone Number
+                              CustomTextField(
+                                controller: controller.phoneNumber,
+                                hintText: "Mobile Number",
+                                prefixIcon: Icons.phone,
+                                keyboardType: TextInputType.phone,
+                                validator: controller.validatePhone,
+                              ),
+                              SizedBox(height: height * 0.02),
+
+                              // CNIC
+                              CustomTextField(
+                                controller: controller.cnic,
+                                hintText: "CNIC (without dashes)",
+                                prefixIcon: Icons.credit_card,
+                                keyboardType: TextInputType.number,
+                                validator: controller.validateCNIC,
+                              ),
+                              SizedBox(height: height * 0.02),
+
+                              // Email
+                              CustomTextField(
+                                controller: controller.email,
+                                hintText: "Email",
+                                prefixIcon: Icons.email,
+                                keyboardType: TextInputType.emailAddress,
+                                validator: controller.validateEmail,
+                              ),
+                              SizedBox(height: height * 0.02),
+
+                              // Address
+                              CustomTextField(
+                                controller: controller.address,
+                                hintText: "Address",
+                                prefixIcon: Icons.location_on,
+                                validator: (value) => value?.isEmpty ?? true ? 'Required field' : null,
+                              ),
+                              SizedBox(height: height * 0.02),
+
+                              // Username
+                              CustomTextField(
+                                controller: controller.userName,
+                                hintText: "Username",
+                                prefixIcon: Icons.person_outline,
+                                validator: (value) => value?.isEmpty ?? true ? 'Required field' : null,
+                              ),
+                              SizedBox(height: height * 0.02),
+
+                              // Password Field
+                              Obx(() => CustomTextField(
+                                controller: controller.password,
+                                hintText: "Password",
+                                prefixIcon: Icons.lock,
+                                suffixIcon: controller.showPassword.value ? Icons.visibility : Icons.visibility_off,
+                                obscureText: !controller.showPassword.value,
+                                validator: controller.validatePassword,
+                                onSuffixIconPressed: () => controller.showPassword.toggle(),
+                              )),
+                              SizedBox(height: height * 0.02),
+
+                              // Confirm Password Field
+                              Obx(() => CustomTextField(
+                                controller: controller.confirmPassword,
+                                hintText: "Confirm Password",
+                                prefixIcon: Icons.lock,
+                                suffixIcon: controller.showConfirmPassword.value ? Icons.visibility : Icons.visibility_off,
+                                obscureText: !controller.showConfirmPassword.value,
+                                validator: controller.validateConfirmPassword,
+                                onSuffixIconPressed: () => controller.showConfirmPassword.toggle(),
+                              )),
+
+                              // const SizedBox(height: 15),
+                              // _buildRegistrationDateField(),
+                              // const SizedBox(height: 15),
+
+                              // Status Dropdown
+                              // _buildStatusDropdown(),
+
+                              // Role Dropdown
+                              // _buildRoleDropdown(),
+
+                              SizedBox(height: height * 0.03),
+
+                              // Register Button
+                              Obx(() => Material(
+                                borderRadius: BorderRadius.circular(15),
+                                elevation: 6,
+                                child: InkWell(
+                                  onTap: controller.isLoading.value ? null : controller.registerUser,
+                                  borderRadius: BorderRadius.circular(15),
+                                  child: Container(
+                                    height: height * 0.06,
+                                    width: width,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(15),
+                                      gradient: LinearGradient(
+                                        colors: [AppColors.orangeShade, Colors.deepOrangeAccent],
+                                      ),
+                                    ),
+                                    child: Center(
+                                      child: controller.isLoading.value
+                                          ? CircularProgressIndicator(color: Colors.white)
+                                          : CustomText(
+                                        text: "Register",
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              )),
+                              SizedBox(height: height * 0.02),
+
+                              // Login Prompt
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Text("Already have an account?"),
+                                  TextButton(
+                                    onPressed: () => Get.off(() => LoginScreen()),
+                                    child: Text(
+                                      "Login",
+                                      style: TextStyle(
+                                        color: AppColors.orangeShade,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -269,7 +312,7 @@ class SignupScreen extends StatelessWidget {
   InputDecoration _dropdownDecoration(IconData icon) {
     return InputDecoration(
       filled: true,
-      fillColor: Colors.grey[100],
+      fillColor: Colors.grey[200],
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
         borderSide: BorderSide.none,
@@ -281,7 +324,7 @@ class SignupScreen extends StatelessWidget {
           width: 1.5,
         ),
       ),
-      prefixIcon: Icon(icon, color: Colors.grey[600]),
+      prefixIcon: Icon(icon, color: Colors.grey[700]),
       contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 2),
     );
   }

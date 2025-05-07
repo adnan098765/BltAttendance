@@ -257,15 +257,20 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
 
   void startBreakTypeTimer(String breakType) {
     breakTypeTimers[breakType]?.cancel();
-    breakTypeTimers[breakType] = Timer.periodic(const Duration(seconds: 1), (
-      timer,
-    ) {
-      setState(() {
-        final seconds = breakTypeElapsedSeconds[breakType] ?? 0;
-        breakTypeElapsedSeconds[breakType] = seconds + 1;
-      });
-      if ((breakTypeElapsedSeconds[breakType] ?? 0) % 10 == 0)
-        saveBreakStatus();
+    breakTypeTimers[breakType] = Timer.periodic(const Duration(seconds: 1), (timer) {
+      // Check if widget is still mounted before calling setState
+      if (mounted) {
+        setState(() {
+          final seconds = breakTypeElapsedSeconds[breakType] ?? 0;
+          breakTypeElapsedSeconds[breakType] = seconds + 1;
+        });
+        if ((breakTypeElapsedSeconds[breakType] ?? 0) % 10 == 0)
+          saveBreakStatus();
+      } else {
+        // Widget is no longer mounted, cancel the timer
+        timer.cancel();
+        breakTypeTimers[breakType] = null;
+      }
     });
   }
 
@@ -316,13 +321,14 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
           'duration': duration,
         });
         breakRecords.sort(
-          (a, b) =>
+              (a, b) =>
               DateTime.parse(b['start']).compareTo(DateTime.parse(a['start'])),
         );
 
         activeBreaks[breakType] = false;
         breakTypeStartTimes[breakType] = null;
         breakTypeTimers[breakType]?.cancel();
+        breakTypeTimers[breakType] = null;
       });
 
       saveBreakRecords();
@@ -390,12 +396,13 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
           'duration': duration,
         });
         breakRecords.sort(
-          (a, b) =>
+              (a, b) =>
               DateTime.parse(b['start']).compareTo(DateTime.parse(a['start'])),
         );
         isQuickBreak = false;
         quickBreakStart = null;
         _quickTimer?.cancel();
+        _quickTimer = null;
       });
       saveBreakRecords();
       saveBreakStatus();
@@ -461,12 +468,13 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
           'duration': duration,
         });
         breakRecords.sort(
-          (a, b) =>
+              (a, b) =>
               DateTime.parse(b['start']).compareTo(DateTime.parse(a['start'])),
         );
         isMealBreak = false;
         mealBreakStart = null;
         _mealTimer?.cancel();
+        _mealTimer = null;
       });
       saveBreakRecords();
       saveBreakStatus();
@@ -481,16 +489,26 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
   void startQuickTimer() {
     _quickTimer?.cancel();
     _quickTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      setState(() => quickElapsedSeconds++);
-      if (quickElapsedSeconds % 10 == 0) saveBreakStatus();
+      if (mounted) {
+        setState(() => quickElapsedSeconds++);
+        if (quickElapsedSeconds % 10 == 0) saveBreakStatus();
+      } else {
+        timer.cancel();
+        _quickTimer = null;
+      }
     });
   }
 
   void startMealTimer() {
     _mealTimer?.cancel();
     _mealTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      setState(() => mealElapsedSeconds++);
-      if (mealElapsedSeconds % 10 == 0) saveBreakStatus();
+      if (mounted) {
+        setState(() => mealElapsedSeconds++);
+        if (mealElapsedSeconds % 10 == 0) saveBreakStatus();
+      } else {
+        timer.cancel();
+        _mealTimer = null;
+      }
     });
   }
 
@@ -528,11 +546,11 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
     final now = DateTime.now();
     return breakRecords
         .where((record) {
-          final date = DateTime.parse(record['start']);
-          return date.year == now.year &&
-              date.month == now.month &&
-              date.day == now.day;
-        })
+      final date = DateTime.parse(record['start']);
+      return date.year == now.year &&
+          date.month == now.month &&
+          date.day == now.day;
+    })
         .fold(0, (sum, record) => sum + (record['duration'] as int));
   }
 
@@ -540,22 +558,30 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
     final now = DateTime.now();
     return breakRecords
         .where((record) {
-          final date = DateTime.parse(record['start']);
-          return date.year == now.year && date.month == now.month;
-        })
+      final date = DateTime.parse(record['start']);
+      return date.year == now.year && date.month == now.month;
+    })
         .fold(0, (sum, record) => sum + (record['duration'] as int));
   }
 
   bool isBreakActiveByType(String breakType) {
     return activeBreaks[breakType] ?? false;
   }
+
   @override
   void dispose() {
+    // Cancel quick and meal timers
     _quickTimer?.cancel();
+    _quickTimer = null;
     _mealTimer?.cancel();
+    _mealTimer = null;
 
-    // Cancel all break type timers
-    breakTypeTimers.forEach((_, timer) => timer?.cancel());
+    // Cancel all break type timers and clear the map
+    breakTypeTimers.forEach((type, timer) {
+      timer?.cancel();
+      breakTypeTimers[type] = null;
+    });
+    breakTypeTimers.clear();
 
     super.dispose();
   }
@@ -581,7 +607,7 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
         backgroundColor: AppColors.appColor,
       ),
       body: Obx(
-        () => Stack(
+            () => Stack(
           children: [
             SingleChildScrollView(
               child: Column(
@@ -613,7 +639,7 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
                                 const SizedBox(height: 12),
                                 Row(
                                   mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
+                                  MainAxisAlignment.spaceBetween,
                                   children: [
                                     const Text(
                                       "Today's Total:",
@@ -634,7 +660,7 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
                                 const SizedBox(height: 8),
                                 Row(
                                   mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
+                                  MainAxisAlignment.spaceBetween,
                                   children: [
                                     const Text(
                                       "This Month's Total:",
@@ -672,26 +698,26 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
 
                             return DropdownButton<String>(
                               value:
-                                  getLpBreakTypesController
-                                          .selectedBreakType
-                                          .value
-                                          .isEmpty
-                                      ? null
-                                      : getLpBreakTypesController
-                                          .selectedBreakType
-                                          .value,
+                              getLpBreakTypesController
+                                  .selectedBreakType
+                                  .value
+                                  .isEmpty
+                                  ? null
+                                  : getLpBreakTypesController
+                                  .selectedBreakType
+                                  .value,
                               isExpanded: true,
                               hint: const Text("Select Break Type"),
                               underline: const SizedBox(),
                               items:
-                                  getLpBreakTypesController.breakTypes.map((
-                                    type,
+                              getLpBreakTypesController.breakTypes.map((
+                                  type,
                                   ) {
-                                    return DropdownMenuItem<String>(
-                                      value: type.name,
-                                      child: Text("${type.name}"),
-                                    );
-                                  }).toList(),
+                                return DropdownMenuItem<String>(
+                                  value: type.name,
+                                  child: Text("${type.name}"),
+                                );
+                              }).toList(),
                               onChanged: (newValue) {
                                 if (newValue != null) {
                                   getLpBreakTypesController
@@ -715,7 +741,7 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
                               children: [
                                 Row(
                                   mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
+                                  MainAxisAlignment.spaceBetween,
                                   children: [
                                     Obx(() {
                                       final type =
@@ -772,8 +798,8 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
                                   final isOvertime =
                                       (type == 'Quick Break' &&
                                           getActiveBreakSeconds(type) > 600) ||
-                                      (type == 'Meal Break' &&
-                                          getActiveBreakSeconds(type) > 3600);
+                                          (type == 'Meal Break' &&
+                                              getActiveBreakSeconds(type) > 3600);
 
                                   return ClipRRect(
                                     borderRadius: BorderRadius.circular(5),
@@ -781,9 +807,9 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
                                       value: percent,
                                       backgroundColor: Colors.grey[200],
                                       color:
-                                          isOvertime
-                                              ? Colors.red
-                                              : AppColors.appColor,
+                                      isOvertime
+                                          ? Colors.red
+                                          : AppColors.appColor,
                                       minHeight: 10,
                                     ),
                                   );
@@ -796,22 +822,22 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
                                           .value;
                                   final isActive =
                                       selectedType.isNotEmpty &&
-                                      isBreakActiveByType(selectedType);
+                                          isBreakActiveByType(selectedType);
 
                                   return SizedBox(
                                     width: double.infinity,
                                     child: ElevatedButton(
                                       onPressed:
-                                          selectedType.isEmpty
-                                              ? null
-                                              : (isActive
-                                                  ? endBreak
-                                                  : startBreak),
+                                      selectedType.isEmpty
+                                          ? null
+                                          : (isActive
+                                          ? endBreak
+                                          : startBreak),
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor:
-                                            isActive
-                                                ? AppColors.redColor
-                                                : AppColors.appColor,
+                                        isActive
+                                            ? AppColors.redColor
+                                            : AppColors.appColor,
                                         padding: const EdgeInsets.symmetric(
                                           vertical: 12,
                                         ),
@@ -851,8 +877,10 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
                   ),
                   const SizedBox(height: 8),
 
+                  // THIS IS THE FIXED PART - Setting a fixed height for the ListView
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    height: 300, // Fixed height for the ListView
                     child: Obx(() {
                       if (controller.isLoading.value) {
                         return const Center(child: CircularProgressIndicator());
@@ -863,27 +891,30 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
                       }
 
                       return ListView.builder(
+                        shrinkWrap: true, // Make the ListView adapt to its content
+                        physics: const AlwaysScrollableScrollPhysics(), // Allow scrolling
                         itemCount: controller.breaksList.length,
                         itemBuilder: (context, index) {
                           final record = controller.breaksList[index];
 
                           return Card(
+                            margin: const EdgeInsets.only(bottom: 8.0),
                             color: AppColors.appColor,
                             child: ListTile(
                               title: Text(
-                                record.type ?? "Unknown",
-                                style: TextStyle(
+                                "${record.type}",
+                                style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.whiteTheme,
                                 ),
                               ),
                               subtitle: Text(
-                                "Start: ${record.startDate}\nEnd: ${record.endDate}",
-                                style: TextStyle(color: AppColors.whiteTheme),
+                                "Start: ${record.startDate}\nEnd: ${record.endDate ?? 'In progress'}",
+                                style: const TextStyle(color: AppColors.whiteTheme),
                               ),
                               trailing: Text(
                                 _calculateDuration(record.startDate, record.endDate),
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.whiteTheme,
                                 ),
@@ -893,9 +924,7 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
                         },
                       );
                     }),
-                  )
-
-
+                  ),
                 ],
               ),
             ),
