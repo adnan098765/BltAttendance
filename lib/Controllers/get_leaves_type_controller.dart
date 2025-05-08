@@ -8,12 +8,14 @@ class GetLeaveTypesController extends GetxController {
   var leaveTypes = <LeaveTypeModel>[].obs;
   var isLoading = false.obs;
 
-  Future<void> fetchLeaveTypes() async {
+  Future<void> fetchLeaveTypes(int userId) async {
     try {
       isLoading.value = true;
-      Get.log("Fetching leave types...");
+      Get.log("Fetching leave types for user ID: $userId");
 
-      final response = await http.get(Uri.parse('https://crolahore.azurewebsites.net/api/Master/GetLpLeaveTypes'));
+      final response = await http.get(
+        Uri.parse('https://crolahore.azurewebsites.net/api/Master/GetLpLeaveTypes?UserID=$userId'),
+      );
 
       Get.log("Response status: ${response.statusCode}");
       Get.log("Response body: ${response.body}");

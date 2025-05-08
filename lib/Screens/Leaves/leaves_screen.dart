@@ -12,6 +12,7 @@ import '../../Controllers/get_leaves_type_controller.dart';
 import '../../Controllers/leaves_controller.dart';
 import '../../Models/save_lp_requests.dart';
 import '../../Widgets/text_widget.dart';
+import '../../prefs/sharedPreferences.dart';
 
 class LeaveScreen extends StatefulWidget {
   const LeaveScreen({super.key});
@@ -23,70 +24,62 @@ class LeaveScreen extends StatefulWidget {
 class _LeaveScreenState extends State<LeaveScreen> {
   String? _selectedLeaveType;
   final TextEditingController _reasonController = TextEditingController();
-  final List<Map<String, String>> _submittedLeaves = [];
-  final Map<String, Timer> _cancelTimers = {};
   final LeaveController leaveController = Get.put(LeaveController());
-  final leaveStatusController = Get.put(GetLpLeaveStatusController());
-  final GetLeavesController getleavesController = Get.put(
-    GetLeavesController(),
-  );
-  final GetLeaveTypesController leaveTypesController = Get.put(
-    GetLeaveTypesController(),
-  );
+  final GetLeavesController getleavesController = Get.put(GetLeavesController());
+  final GetLeaveTypesController leaveTypesController = Get.put(GetLeaveTypesController());
 
   @override
   void initState() {
     super.initState();
-    _loadSubmittedLeaves();
-    leaveTypesController.fetchLeaveTypes();
-    getleavesController.fetchLeaves();
+    _fetchLeaveTypesAndLeaves();
   }
 
-  Future<void> _loadSubmittedLeaves() async {
+  Future<void> _fetchLeaveTypesAndLeaves() async {
     final prefs = await SharedPreferences.getInstance();
-    final leavesString = prefs.getString('leaves');
-    if (leavesString != null) {
-      final decoded = jsonDecode(leavesString) as List;
-      for (var e in decoded) {
-        final leave = Map<String, String>.from(e);
-        final timestamp = DateTime.parse(leave['timestamp']!);
-        final difference = DateTime.now().difference(timestamp).inMinutes;
-        _submittedLeaves.add(leave);
+    final userId = prefs.getInt('userId');
 
-        if (difference < 60) {
-          final remaining = Duration(minutes: 60 - difference);
-          _cancelTimers[leave['timestamp']!] = Timer(remaining, () {
-            setState(() {
-              _cancelTimers.remove(leave['timestamp']);
-            });
-          });
-        }
-      }
-      setState(() {});
+    if (userId != null) {
+      await leaveTypesController.fetchLeaveTypes(userId);
+      await getleavesController.fetchLeaves();
+    } else {
+      Get.snackbar(
+        'Error',
+        'User ID not found. Please log in again.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     }
-  }
-
-  Future<void> _saveSubmittedLeaves() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('leaves', jsonEncode(_submittedLeaves));
   }
 
   int _getLeaveTypeId(String leaveType) {
     final selected = leaveTypesController.leaveTypes.firstWhereOrNull(
-      (e) => e.name == leaveType,
+          (e) => e.name == leaveType,
     );
     return selected?.id ?? 0;
   }
 
   void _submitLeave() async {
-    const int loggedInUserId = 1;
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getInt('userId');
+
+    if (userId == null) {
+      Get.snackbar(
+        'Error',
+        'User ID not found. Please log in again.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return;
+    }
 
     if (_selectedLeaveType != null && _reasonController.text.isNotEmpty) {
       final leaveRequest = SaveLpLeaveRequest(
         type: _getLeaveTypeId(_selectedLeaveType!),
         reason: _reasonController.text.trim(),
-        status: 4,
-        userId: loggedInUserId,
+        status: 4, // Assuming 4 is for "Pending" status
+        userId: userId,
       );
 
       Get.dialog(
@@ -94,80 +87,57 @@ class _LeaveScreenState extends State<LeaveScreen> {
         barrierDismissible: false,
       );
 
-      final success = await leaveController.submitLeaveApi(leaveRequest);
-      Get.back();
+      try {
+        final success = await leaveController.submitLeaveApi(leaveRequest);
+        Get.back();
 
-      if (success) {
-        final newLeave = {
-          'type': _selectedLeaveType!,
-          'reason': _reasonController.text.trim(),
-          'timestamp': DateTime.now().toIso8601String(),
-        };
-        setState(() {
-          _submittedLeaves.add(newLeave);
-          _selectedLeaveType = null;
-          _reasonController.clear();
-        });
-        await _saveSubmittedLeaves();
-        _startCancelTimer(newLeave);
+        if (success) {
+          setState(() {
+            _selectedLeaveType = null;
+            _reasonController.clear();
+          });
+          await getleavesController.fetchLeaves();
 
+          Get.snackbar(
+            'Success',
+            'Leave submitted successfully!',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.green,
+            colorText: Colors.white,
+          );
+        } else {
+          Get.snackbar(
+            'Error',
+            'Failed to submit leave. Please try again.',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+          );
+        }
+      } catch (e) {
+        Get.back();
         Get.snackbar(
-          'Leave Submitted',
-          'Your leave has been recorded successfully!',
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: AppColors.appColor,
-          colorText: Colors.white,
-        );
-        getleavesController.fetchLeaves();
-      } else {
-        Get.snackbar(
-          'Submission Failed',
-          'Failed to submit leave. Try again later.',
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: Colors.red.shade400,
+          'Error',
+          'An error occurred: $e',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
           colorText: Colors.white,
         );
       }
     } else {
       Get.snackbar(
-        'Missing Info',
-        'Please select leave type and enter reason.',
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red.shade400,
+        'Missing Information',
+        'Please select a leave type and enter a reason',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.orange,
         colorText: Colors.white,
       );
     }
   }
 
-  void _startCancelTimer(Map<String, String> leave) {
-    final id = leave['timestamp']!;
-    _cancelTimers[id] = Timer(const Duration(minutes: 60), () {
-      setState(() {
-        _cancelTimers.remove(id);
-      });
-    });
-  }
-
-  void _cancelLeave(String timestamp) async {
-    setState(() {
-      _submittedLeaves.removeWhere((leave) => leave['timestamp'] == timestamp);
-      _cancelTimers[timestamp]?.cancel();
-      _cancelTimers.remove(timestamp);
-    });
-    await _saveSubmittedLeaves();
-    Get.snackbar(
-      'Leave Cancelled',
-      'Your leave has been cancelled.',
-      snackPosition: SnackPosition.TOP,
-      backgroundColor: Colors.orange.shade400,
-      colorText: Colors.white,
-    );
-  }
-
   @override
   void dispose() {
     _reasonController.dispose();
-    _cancelTimers.values.forEach((timer) => timer.cancel());
     super.dispose();
   }
 
@@ -183,126 +153,148 @@ class _LeaveScreenState extends State<LeaveScreen> {
           icon: const Icon(Icons.arrow_back_ios, color: AppColors.whiteTheme),
         ),
         title: Text(
-          'Leave',
+          'Leave Application',
           style: GoogleFonts.poppins(
             fontWeight: FontWeight.bold,
             color: AppColors.whiteTheme,
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Obx(() {
-              if (leaveTypesController.isLoading.value) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              return Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  color: Colors.grey[200],
-                ),
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await _fetchLeaveTypesAndLeaves();
+        },
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Leave Type Dropdown
+              Obx(() {
+                if (leaveTypesController.isLoading.value) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-                child: DropdownButton<String>(
-                  isExpanded: true,
+                if (leaveTypesController.leaveTypes.isEmpty) {
+                  return const Center(child: Text("No leave types available"));
+                }
 
-                  hint: Text(
-                    'Select Leave Type',
-                    style: GoogleFonts.poppins(fontSize: 16),
-                  ),
-                  value: _selectedLeaveType,
-                  items:
-                      leaveTypesController.leaveTypes.map((leave) {
-                        return DropdownMenuItem<String>(
-                          value: leave.name,
-                          child: Text(leave.name, style: GoogleFonts.poppins()),
-                        );
-                      }).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedLeaveType = value;
-                    });
-                  },
-                  underline: const SizedBox(),
-                ),
-              );
-            }),
-            const SizedBox(height: 20),
-
-            if (_selectedLeaveType != null) ...[
-              Text(
-                'Reason for $_selectedLeaveType:',
-                style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _reasonController,
-                decoration: InputDecoration(
-                  labelText: 'Enter your reason',
-                  filled: true,
-                  fillColor: Colors.grey[200],
-                  border: OutlineInputBorder(
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide.none,
+                    color: Colors.grey[200],
                   ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                ),
-                maxLines: 3,
-              ),
-              const SizedBox(height: 20),
-              Center(
-                child: GestureDetector(
-                  onTap: _submitLeave,
-                  child: Container(
-                    height: 50,
-                    width: width * 0.9,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(15),
-                      gradient: LinearGradient(
-                        colors: [AppColors.orangeShade, AppColors.orangeShade],
-                      ),
+                  child: DropdownButton<String>(
+                    isExpanded: true,
+                    hint: Text(
+                      'Select Leave Type',
+                      style: GoogleFonts.poppins(fontSize: 16),
                     ),
-                    child: Center(
-                      child: CustomText(
-                        text: "Submit Leave",
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.whiteTheme,
-                      ),
-                    ),
+                    value: _selectedLeaveType,
+                    items: leaveTypesController.leaveTypes.map((leave) {
+                      return DropdownMenuItem<String>(
+                        value: leave.name,
+                        child: Text(leave.name, style: GoogleFonts.poppins()),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedLeaveType = value;
+                      });
+                    },
+                    underline: const SizedBox(),
                   ),
-                ),
-              ),
+                );
+              }),
               const SizedBox(height: 20),
-            ],
 
-            if (_submittedLeaves.isNotEmpty ||
-                getleavesController.leaves.isNotEmpty)
+              // Reason Input
+              if (_selectedLeaveType != null) ...[
+                Text(
+                  'Reason for $_selectedLeaveType:',
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: _reasonController,
+                  decoration: InputDecoration(
+                    labelText: 'Enter your reason',
+                    filled: true,
+                    fillColor: Colors.grey[200],
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                  ),
+                  maxLines: 3,
+                ),
+                const SizedBox(height: 20),
+
+                // Submit Button
+                Center(
+                  child: GestureDetector(
+                    onTap: _submitLeave,
+                    child: Container(
+                      height: 50,
+                      width: width * 0.9,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(15),
+                        gradient: LinearGradient(
+                          colors: [AppColors.orangeShade, AppColors.orangeShade],
+                        ),
+                      ),
+                      child: Center(
+                        child: CustomText(
+                          text: "Submit Leave",
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.whiteTheme,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
+
+              // Leaves List (Showing only type and reason)
               Obx(() {
                 if (getleavesController.isLoading.value) {
-                  return const Center(child: Text(""));
+                  return const Center(child: CircularProgressIndicator());
                 }
 
                 if (getleavesController.errorMessage.value.isNotEmpty) {
-                  return Text(
-                    getleavesController.errorMessage.value,
-                    style: const TextStyle(color: Colors.red),
+                  return Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      children: [
+                        Text(
+                          getleavesController.errorMessage.value,
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                        const SizedBox(height: 10),
+                        ElevatedButton(
+                          onPressed: () => getleavesController.fetchLeaves(),
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
                   );
                 }
 
                 if (getleavesController.leaves.isEmpty) {
-                  return Text(
-                    "No leaves submitted yet",
-                    style: GoogleFonts.poppins(),
+                  return Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text(
+                      "No leaves submitted yet",
+                      style: GoogleFonts.poppins(),
+                      textAlign: TextAlign.center,
+                    ),
                   );
                 }
 
@@ -310,38 +302,31 @@ class _LeaveScreenState extends State<LeaveScreen> {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: getleavesController.leaves.length,
-                  itemBuilder: (context, index) {
-                    final leave = getleavesController.leaves[index];
-                    return Card(
-                      color: AppColors.appColor,
-                      margin: const EdgeInsets.symmetric(vertical: 6),
-                      child: ListTile(
-                        title: Text(
-                          'Type: ${leave.type}',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: AppColors.whiteTheme,
+                    // In your ListView.builder section, update the itemBuilder like this:
+                    itemBuilder: (context, index) {
+                      final leave = getleavesController.leaves[index];
+                      return Card(
+                        color: AppColors.appColor,
+                        margin: const EdgeInsets.symmetric(vertical: 6),
+                        child: ListTile(
+                          title: Text(
+                            'Type: ${leave.type ?? "Not specified"}', // Handle null case
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: AppColors.whiteTheme,
+                            ),
+                          ),
+                          subtitle: Text(
+                            "Reason: ${leave.reason ?? "No reason provided"}", // Handle null case
+                            style: const TextStyle(color: AppColors.whiteTheme),
                           ),
                         ),
-                        subtitle: Text(
-                          "${leave.reason}",
-                          style: const TextStyle(color: AppColors.whiteTheme),
-                        ),
-                        trailing: TextButton(
-                          onPressed: () {
-                            // Future: Call cancel API here if needed.
-                          },
-                          child: const Text(
-                            'Cancel leave',
-                            style: TextStyle(color: AppColors.blackColor),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
+                      );
+                    }
                 );
               }),
-          ],
+            ],
+          ),
         ),
       ),
     );

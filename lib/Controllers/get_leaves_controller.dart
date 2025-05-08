@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:developer'; // for log()
+import 'dart:developer';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import '../Models/get_leaves_model.dart';
@@ -22,93 +22,79 @@ class GetLeavesController extends GetxController {
 
     try {
       final userId = await getUserId();
-
       if (userId == null) {
         errorMessage('User ID not found. Please log in again');
         leaves.clear();
-        isLoading(false);
         return;
       }
 
       final response = await http.get(
-        Uri.parse(
-          "https://crolahore.azurewebsites.net/api/Master/GetLpLeavesByUserID?UserID=1",
-        ),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
+        Uri.parse("https://crolahore.azurewebsites.net/api/Master/GetLpLeavesByUserID?UserID=$userId"),
+        headers: {'Content-Type': 'application/json'},
       );
 
-      print('Response status code: ${response.statusCode}');
-
       if (response.statusCode == 200) {
-        final responseBody = response.body;
-        print('Raw response body: $responseBody');
-
-        try {
-          final decodedData = jsonDecode(responseBody);
-
-          if (decodedData is List) {
-            if (decodedData.isNotEmpty) {
-              print('First item sample: ${decodedData.first}');
-              leaves.value =
-                  decodedData.map((e) => GetLeavesModel.fromJson(e)).toList();
-              print('Successfully parsed ${leaves.length} leaves');
-            } else {
-              print('API returned empty list');
-              leaves.clear();
-            }
-          } else {
-            print('API did not return a list: $decodedData');
-            errorMessage('Unexpected response format from server');
-            leaves.clear();
-          }
-        } catch (e) {
-          print('JSON decoding error: $e');
-          errorMessage('Failed to parse server response');
-          leaves.clear();
-        }
+        _processResponse(response.body);
       } else {
-        print(
-          'Failed to fetch leaves, status: ${response.statusCode}, response: ${response.body}',
-        );
-        errorMessage('Server returned error code: ${response.statusCode}');
+        errorMessage('Server error: ${response.statusCode}');
         leaves.clear();
       }
-    } catch (e) {
-      print('Network error fetching leaves: $e');
-      errorMessage('Network error: $e');
+    } catch (e, stackTrace) {
+      log('Network error: $e\n$stackTrace');
+      errorMessage('Network error: ${e.toString()}');
       leaves.clear();
     } finally {
       isLoading(false);
     }
   }
 
-
-// Uncomment and implement when you want to cancel a leave
-/*
-  Future<bool> cancelLeave(int leaveId) async {
+  void _processResponse(String responseBody) {
     try {
-      final response = await http.delete(
-        Uri.parse('https://crolahore.azurewebsites.net/api/LpLeaveRequests/$leaveId'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      );
+      final dynamic data = jsonDecode(responseBody);
 
-      if (response.statusCode == 200 || response.statusCode == 204) {
-        await fetchLeaves();
-        return true;
-      } else {
-        print('Failed to cancel leave: ${response.statusCode}, ${response.body}');
-        return false;
+      if (data == null) {
+        errorMessage('Empty response from server');
+        return;
       }
-    } catch (e) {
-      print('Error cancelling leave: $e');
-      return false;
+
+      if (data is List) {
+        leaves.assignAll(
+            (data as List).whereType<Map>().map((item) =>
+                GetLeavesModel.fromJson(Map<String, dynamic>.from(item))
+            ).toList()
+        );
+      } else if (data is Map) {
+        leaves.assignAll([
+          GetLeavesModel.fromJson(Map<String, dynamic>.from(data as Map<dynamic, dynamic>))
+        ]);
+      } else {
+        errorMessage('Unexpected response format');
+      }
+    } catch (e, stackTrace) {
+      log('Failed to parse response: $e\n$stackTrace');
+      errorMessage('Failed to process response: ${e.toString()}');
+      leaves.clear();
     }
   }
-  */
+
+  // Future<void> cancelLeave(int leaveId) async {
+  //   try {
+  //     isLoading(true);
+  //     final response = await http.post(
+  //       Uri.parse("https://crolahore.azurewebsites.net/api/Master/CancelLeave?LeaveID=$leaveId"),
+  //     );
+  //
+  //     if (response.statusCode == 200) {
+  //       await fetchLeaves();
+  //       Get.snackbar('Success', 'Leave cancelled successfully');
+  //     } else {
+  //       throw Exception('Failed to cancel leave: ${response.statusCode}');
+  //     }
+  //   } catch (e, stackTrace) {
+  //     log('Cancel leave error: $e\n$stackTrace');
+  //     Get.snackbar('Error', 'Failed to cancel leave: ${e.toString()}');
+  //   } finally {
+  //     isLoading(false);
+  //   }
+  // }
 }

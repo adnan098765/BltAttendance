@@ -20,6 +20,8 @@ class BreakTrackerScreen extends StatefulWidget {
 
 class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
   bool isQuickBreak = false;
+  int get dailyBreakSeconds => dailyBreakSecondsTotal.value;
+  int get monthlyBreakSeconds => monthlyBreakSecondsTotal.value;
   bool isMealBreak = false;
   DateTime? quickBreakStart;
   DateTime? mealBreakStart;
@@ -32,6 +34,13 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
   );
   final GetBreaksController controller = Get.put(GetBreaksController());
 
+  // RxInt values to track break statistics (using GetX observables for reactive updates)
+  final RxInt dailyBreakSecondsTotal = 0.obs;
+  final RxInt monthlyBreakSecondsTotal = 0.obs;
+
+  // Add this to store user ID
+  int? userId;
+
   Timer? _quickTimer;
   Timer? _mealTimer;
   int quickElapsedSeconds = 0;
@@ -40,6 +49,10 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
   Map<String, DateTime?> breakTypeStartTimes = {};
   Map<String, Timer?> breakTypeTimers = {};
   Map<String, bool> activeBreaks = {};
+
+  // Timer to periodically update the summaries
+  Timer? _summaryUpdateTimer;
+
   String _calculateDuration(String? startDate, String? endDate) {
     if (startDate == null || endDate == null) {
       return "Invalid dates";
@@ -57,16 +70,204 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
     }
   }
 
-
   @override
   void initState() {
     super.initState();
+    _getUserId();
     loadBreakRecords();
     loadBreakStatus();
-    controller.fetchBreaks(5);
-
+    _fetchBreaksAndTypes();
     log('BreakTypeController Initialized');
-    getLpBreakTypesController.fetchLpBreakTypes();
+
+    // Start a timer that updates summary data every second
+    _summaryUpdateTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      _updateBreakSummaries();
+    });
+  }
+
+  // Method to update break summaries
+  void _updateBreakSummaries() {
+    if (mounted) {
+      final daily = _calculateDailyBreakSeconds();
+      final monthly = _calculateMonthlyBreakSeconds();
+
+      // Update the observable values
+      dailyBreakSecondsTotal.value = daily;
+      monthlyBreakSecondsTotal.value = monthly;
+    }
+  }
+
+  // Calculate daily break seconds including active breaks
+  int _calculateDailyBreakSeconds() {
+    final now = DateTime.now();
+    int total = 0;
+
+    // First add completed breaks from API
+    if (controller.breaksList.isNotEmpty) {
+      total += controller.breaksList
+          .where((record) {
+        if (record.endDate == null) return false;
+        try {
+          final date = DateTime.parse(record.startDate!);
+          return date.year == now.year &&
+              date.month == now.month &&
+              date.day == now.day;
+        } catch (e) {
+          return false;
+        }
+      })
+          .fold(0, (sum, record) => sum + (record.duration ?? 0));
+    }
+
+    // Then add from local records
+    total += breakRecords
+        .where((record) {
+      if (record['userId'] != userId) return false;
+      try {
+        final date = DateTime.parse(record['start']);
+        return date.year == now.year &&
+            date.month == now.month &&
+            date.day == now.day;
+      } catch (e) {
+        return false;
+      }
+    })
+        .fold(0, (sum, record) => sum + (record['duration'] as int));
+
+    // Add currently active breaks
+    activeBreaks.forEach((type, isActive) {
+      if (isActive && breakTypeStartTimes[type] != null) {
+        final startTime = breakTypeStartTimes[type]!;
+        final today = DateTime(now.year, now.month, now.day);
+        final startDate = DateTime(startTime.year, startTime.month, startTime.day);
+
+        if (today.isAtSameMomentAs(startDate)) {
+          total += breakTypeElapsedSeconds[type] ?? 0;
+        }
+      }
+    });
+
+    // Add active quick break if it's today
+    if (isQuickBreak && quickBreakStart != null) {
+      final startDate = DateTime(
+          quickBreakStart!.year,
+          quickBreakStart!.month,
+          quickBreakStart!.day
+      );
+      final today = DateTime(now.year, now.month, now.day);
+
+      if (today.isAtSameMomentAs(startDate)) {
+        total += quickElapsedSeconds;
+      }
+    }
+
+    // Add active meal break if it's today
+    if (isMealBreak && mealBreakStart != null) {
+      final startDate = DateTime(
+          mealBreakStart!.year,
+          mealBreakStart!.month,
+          mealBreakStart!.day
+      );
+      final today = DateTime(now.year, now.month, now.day);
+
+      if (today.isAtSameMomentAs(startDate)) {
+        total += mealElapsedSeconds;
+      }
+    }
+
+    return total;
+  }
+
+  // Calculate monthly break seconds including active breaks
+  int _calculateMonthlyBreakSeconds() {
+    final now = DateTime.now();
+    int total = 0;
+
+    // First add completed breaks from API
+    if (controller.breaksList.isNotEmpty) {
+      total += controller.breaksList
+          .where((record) {
+        if (record.endDate == null) return false;
+        try {
+          final date = DateTime.parse(record.startDate!);
+          return date.year == now.year && date.month == now.month;
+        } catch (e) {
+          return false;
+        }
+      })
+          .fold(0, (sum, record) => sum + (record.duration ?? 0));
+    }
+
+    // Then add from local records
+    total += breakRecords
+        .where((record) {
+      if (record['userId'] != userId) return false;
+      try {
+        final date = DateTime.parse(record['start']);
+        return date.year == now.year && date.month == now.month;
+      } catch (e) {
+        return false;
+      }
+    })
+        .fold(0, (sum, record) => sum + (record['duration'] as int));
+
+    // Add currently active breaks
+    activeBreaks.forEach((type, isActive) {
+      if (isActive && breakTypeStartTimes[type] != null) {
+        final startTime = breakTypeStartTimes[type]!;
+        final currentMonth = DateTime(now.year, now.month);
+        final startMonth = DateTime(startTime.year, startTime.month);
+
+        if (currentMonth.isAtSameMomentAs(startMonth)) {
+          total += breakTypeElapsedSeconds[type] ?? 0;
+        }
+      }
+    });
+
+    // Add active quick break if it's this month
+    if (isQuickBreak && quickBreakStart != null) {
+      final startMonth = DateTime(quickBreakStart!.year, quickBreakStart!.month);
+      final currentMonth = DateTime(now.year, now.month);
+
+      if (currentMonth.isAtSameMomentAs(startMonth)) {
+        total += quickElapsedSeconds;
+      }
+    }
+
+    // Add active meal break if it's this month
+    if (isMealBreak && mealBreakStart != null) {
+      final startMonth = DateTime(mealBreakStart!.year, mealBreakStart!.month);
+      final currentMonth = DateTime(now.year, now.month);
+
+      if (currentMonth.isAtSameMomentAs(startMonth)) {
+        total += mealElapsedSeconds;
+      }
+    }
+
+    return total;
+  }
+
+  // Add this method to get userId
+  Future<void> _getUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      userId = prefs.getInt('userId');
+    });
+    log('User ID loaded: $userId');
+  }
+
+  Future<void> _fetchBreaksAndTypes() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getInt('userId'); // Get the stored user ID
+
+    if (userId != null) {
+      // Fetch breaks for the logged-in user
+      await controller.fetchBreaks(userId);
+      await getLpBreakTypesController.fetchLpBreakTypes(); // Fetch break types
+      _updateBreakSummaries(); // Update summaries after fetching
+    } else {
+      log('User ID not found. Cannot fetch breaks.');
+    }
   }
 
   void loadBreakRecords() async {
@@ -76,12 +277,14 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
       setState(() {
         breakRecords = List<Map<String, dynamic>>.from(jsonDecode(data));
       });
+      _updateBreakSummaries(); // Update summaries after loading records
     }
   }
 
   void saveBreakRecords() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString('breakRecords', jsonEncode(breakRecords));
+    _updateBreakSummaries(); // Update summaries after saving records
   }
 
   void saveBreakStatus() async {
@@ -160,6 +363,8 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
 
     if (isQuickBreak) startQuickTimer();
     if (isMealBreak) startMealTimer();
+
+    _updateBreakSummaries(); // Update summaries after loading status
   }
 
   void loadAllBreakTypesStatus(SharedPreferences prefs) {
@@ -184,6 +389,8 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
         startBreakTypeTimer(typeName!);
       }
     }
+
+    _updateBreakSummaries(); // Update summaries after loading break types
   }
 
   bool isWithinAllowedBreakTime() {
@@ -203,12 +410,37 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
     return false;
   }
 
+  // Check if any break is currently active
+  bool isAnyBreakActive() {
+    // Check quick break
+    if (isQuickBreak) return true;
+
+    // Check meal break
+    if (isMealBreak) return true;
+
+    // Check all other break types
+    return activeBreaks.values.any((isActive) => isActive);
+  }
+
   void startBreak() {
     if (!isWithinAllowedBreakTime()) {
       Get.snackbar(
         "Break Not Allowed",
         currentBreakTimeMessage(),
         backgroundColor: AppColors.redColor,
+          colorText: AppColors.whiteTheme
+
+      );
+      return;
+    }
+
+    // Check if any break is already active
+    if (isAnyBreakActive()) {
+      Get.snackbar(
+        "Break Already Active",
+        "Please end your current break before starting a new one",
+        backgroundColor: AppColors.redColor,
+        colorText: AppColors.whiteTheme
       );
       return;
     }
@@ -219,6 +451,8 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
         "Error",
         "Please select a break type first",
         backgroundColor: AppColors.redColor,
+          colorText: AppColors.whiteTheme
+
       );
       return;
     }
@@ -236,9 +470,11 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
 
     startBreakTypeTimer(breakType);
     saveBreakStatus();
+    _updateBreakSummaries(); // Update summaries when starting a break
 
     // Save to API using controller
     final Map<String, dynamic> breakData = {
+      'userId': userId, // Add user ID to the break data
       'breakType': breakType,
       'startTime': now.toIso8601String(),
       'endTime': null,
@@ -246,7 +482,12 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
       'status': 'Started',
     };
 
-    saveLpBreaksController.saveLpBreaks(breakData);
+    saveLpBreaksController.saveLpBreaks(breakData).then((_) {
+      // Refresh the breaks list after saving
+      if (userId != null) {
+        controller.fetchBreaks(userId!);
+      }
+    });
 
     Get.snackbar(
       breakType,
@@ -264,6 +505,12 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
           final seconds = breakTypeElapsedSeconds[breakType] ?? 0;
           breakTypeElapsedSeconds[breakType] = seconds + 1;
         });
+
+        // Update summary when timer is updated
+        if ((breakTypeElapsedSeconds[breakType] ?? 0) % 5 == 0) {
+          _updateBreakSummaries();
+        }
+
         if ((breakTypeElapsedSeconds[breakType] ?? 0) % 10 == 0)
           saveBreakStatus();
       } else {
@@ -304,6 +551,7 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
 
       // Save to API using controller
       final Map<String, dynamic> breakData = {
+        'userId': userId, // Include userId when ending a break
         'breakType': breakType,
         'startTime': breakTypeStartTimes[breakType]!.toIso8601String(),
         'endTime': endTime.toIso8601String(),
@@ -311,10 +559,16 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
         'status': 'Completed',
       };
 
-      saveLpBreaksController.saveLpBreaks(breakData);
+      saveLpBreaksController.saveLpBreaks(breakData).then((_) {
+        // Refresh the breaks list after saving
+        if (userId != null) {
+          controller.fetchBreaks(userId!);
+        }
+      });
 
       setState(() {
         breakRecords.add({
+          'userId': userId, // Include userId in break record
           'type': breakType,
           'start': breakTypeStartTimes[breakType].toString(),
           'end': endTime.toString(),
@@ -333,6 +587,7 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
 
       saveBreakRecords();
       saveBreakStatus();
+      _updateBreakSummaries(); // Update summaries when ending a break
 
       Get.snackbar(
         "$breakType ended",
@@ -343,6 +598,17 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
   }
 
   void startQuickBreak() {
+    // Check if any break is already active
+    if (isAnyBreakActive()) {
+      Get.snackbar(
+        "Break Already Active",
+        "Please end your current break before starting a new one",
+        backgroundColor: AppColors.redColor,
+        colorText: AppColors.whiteTheme
+      );
+      return;
+    }
+
     final now = DateTime.now();
 
     setState(() {
@@ -353,9 +619,11 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
 
     startQuickTimer();
     saveBreakStatus();
+    _updateBreakSummaries(); // Update summaries when starting quick break
 
     // Save to API using controller
     final Map<String, dynamic> breakData = {
+      'userId': userId, // Include userId for quick break
       'breakType': 'Quick Break',
       'startTime': now.toIso8601String(),
       'endTime': null,
@@ -363,7 +631,12 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
       'status': 'Started',
     };
 
-    saveLpBreaksController.saveLpBreaks(breakData);
+    saveLpBreaksController.saveLpBreaks(breakData).then((_) {
+      // Refresh the breaks list after saving
+      if (userId != null) {
+        controller.fetchBreaks(userId!);
+      }
+    });
 
     Get.snackbar(
       "Quick Break",
@@ -379,6 +652,7 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
 
       // Save to API using controller
       final Map<String, dynamic> breakData = {
+        'userId': userId, // Include userId when ending quick break
         'breakType': 'Quick Break',
         'startTime': quickBreakStart!.toIso8601String(),
         'endTime': endTime.toIso8601String(),
@@ -386,10 +660,16 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
         'status': 'Completed',
       };
 
-      saveLpBreaksController.saveLpBreaks(breakData);
+      saveLpBreaksController.saveLpBreaks(breakData).then((_) {
+        // Refresh the breaks list after saving
+        if (userId != null) {
+          controller.fetchBreaks(userId!);
+        }
+      });
 
       setState(() {
         breakRecords.add({
+          'userId': userId, // Include userId in break record
           'type': 'Quick Break',
           'start': quickBreakStart.toString(),
           'end': endTime.toString(),
@@ -406,6 +686,8 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
       });
       saveBreakRecords();
       saveBreakStatus();
+      _updateBreakSummaries(); // Update summaries when ending quick break
+
       Get.snackbar(
         "Quick break ended",
         "Duration: ${formatFullTime(duration)}",
@@ -415,6 +697,17 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
   }
 
   void startMealBreak() {
+    // Check if any break is already active
+    if (isAnyBreakActive()) {
+      Get.snackbar(
+        "Break Already Active",
+        "Please end your current break before starting a new one",
+        backgroundColor: AppColors.redColor,
+        colorText: AppColors.whiteTheme
+      );
+      return;
+    }
+
     final now = DateTime.now();
 
     setState(() {
@@ -425,9 +718,11 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
 
     startMealTimer();
     saveBreakStatus();
+    _updateBreakSummaries(); // Update summaries when starting meal break
 
     // Save to API using controller
     final Map<String, dynamic> breakData = {
+      'userId': userId, // Include userId for meal break
       'breakType': 'Meal Break',
       'startTime': now.toIso8601String(),
       'endTime': null,
@@ -435,7 +730,12 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
       'status': 'Started',
     };
 
-    saveLpBreaksController.saveLpBreaks(breakData);
+    saveLpBreaksController.saveLpBreaks(breakData).then((_) {
+      // Refresh the breaks list after saving
+      if (userId != null) {
+        controller.fetchBreaks(userId!);
+      }
+    });
 
     Get.snackbar(
       "Meal Break",
@@ -451,6 +751,7 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
 
       // Save to API using controller
       final Map<String, dynamic> breakData = {
+        'userId': userId, // Include userId when ending meal break
         'breakType': 'Meal Break',
         'startTime': mealBreakStart!.toIso8601String(),
         'endTime': endTime.toIso8601String(),
@@ -458,10 +759,16 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
         'status': 'Completed',
       };
 
-      saveLpBreaksController.saveLpBreaks(breakData);
+      saveLpBreaksController.saveLpBreaks(breakData).then((_) {
+        // Refresh the breaks list after saving
+        if (userId != null) {
+          controller.fetchBreaks(userId!);
+        }
+      });
 
       setState(() {
         breakRecords.add({
+          'userId': userId, // Include userId in break record
           'type': 'Meal Break',
           'start': mealBreakStart.toString(),
           'end': endTime.toString(),
@@ -478,6 +785,8 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
       });
       saveBreakRecords();
       saveBreakStatus();
+      _updateBreakSummaries(); // Update summaries when ending meal break
+
       Get.snackbar(
         "Meal break ended",
         "Duration: ${formatFullTime(duration)}",
@@ -491,6 +800,12 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
     _quickTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (mounted) {
         setState(() => quickElapsedSeconds++);
+
+        // Update summaries periodically for active breaks
+        if (quickElapsedSeconds % 5 == 0) {
+          _updateBreakSummaries();
+        }
+
         if (quickElapsedSeconds % 10 == 0) saveBreakStatus();
       } else {
         timer.cancel();
@@ -504,6 +819,12 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
     _mealTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (mounted) {
         setState(() => mealElapsedSeconds++);
+
+        // Update summaries periodically for active breaks
+        if (mealElapsedSeconds % 5 == 0) {
+          _updateBreakSummaries();
+        }
+
         if (mealElapsedSeconds % 10 == 0) saveBreakStatus();
       } else {
         timer.cancel();
@@ -542,34 +863,16 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
     return seconds / maxDuration;
   }
 
-  int get dailyBreakSeconds {
-    final now = DateTime.now();
-    return breakRecords
-        .where((record) {
-      final date = DateTime.parse(record['start']);
-      return date.year == now.year &&
-          date.month == now.month &&
-          date.day == now.day;
-    })
-        .fold(0, (sum, record) => sum + (record['duration'] as int));
-  }
-
-  int get monthlyBreakSeconds {
-    final now = DateTime.now();
-    return breakRecords
-        .where((record) {
-      final date = DateTime.parse(record['start']);
-      return date.year == now.year && date.month == now.month;
-    })
-        .fold(0, (sum, record) => sum + (record['duration'] as int));
-  }
-
   bool isBreakActiveByType(String breakType) {
     return activeBreaks[breakType] ?? false;
   }
 
   @override
   void dispose() {
+    // Cancel the summary update timer
+    _summaryUpdateTimer?.cancel();
+    _summaryUpdateTimer = null;
+
     // Cancel quick and meal timers
     _quickTimer?.cancel();
     _quickTimer = null;
@@ -719,10 +1022,18 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
                                 );
                               }).toList(),
                               onChanged: (newValue) {
-                                if (newValue != null) {
+                                if (newValue != null && !isAnyBreakActive()) {
                                   getLpBreakTypesController
                                       .selectedBreakType
                                       .value = newValue;
+                                } else if (isAnyBreakActive()) {
+                                  Get.snackbar(
+                                    "Break Active",
+                                    "Cannot change break type while a break is active",
+                                    backgroundColor: AppColors.redColor,
+                                      colorText: AppColors.whiteTheme
+
+                                  );
                                 }
                               },
                             );
