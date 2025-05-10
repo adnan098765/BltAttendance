@@ -23,7 +23,7 @@ class SignupScreen extends StatelessWidget {
         height: double.infinity,
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [AppColors.orangeShade.withOpacity(0.8), Colors.white],
+            colors: [AppColors.whiteTheme.withOpacity(0.8), AppColors.whiteTheme],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -59,7 +59,7 @@ class SignupScreen extends StatelessWidget {
                                 text: "Registration Form",
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.orangeShade,
+                                color: AppColors.appColor,
                               ),
                               SizedBox(height: height * 0.025),
 
@@ -181,7 +181,7 @@ class SignupScreen extends StatelessWidget {
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(15),
                                       gradient: LinearGradient(
-                                        colors: [AppColors.orangeShade, Colors.deepOrangeAccent],
+                                        colors: [AppColors.appColor, AppColors.greenColor],
                                       ),
                                     ),
                                     child: Center(
@@ -209,7 +209,7 @@ class SignupScreen extends StatelessWidget {
                                     child: Text(
                                       "Login",
                                       style: TextStyle(
-                                        color: AppColors.orangeShade,
+                                        color: AppColors.greenColor,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),

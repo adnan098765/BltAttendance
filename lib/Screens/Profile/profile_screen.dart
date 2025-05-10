@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import '../../Controllers/get_lpusers_controller.dart';
 import '../../Controllers/profile_controller.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -14,22 +15,14 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final ProfileController controller = Get.put(ProfileController());
+  final LpUserController lpUserController = Get.put(LpUserController()); // Added LpUserController
   File? _profileImage;
   final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
     super.initState();
-    _loadSavedImage();
-  }
-
-  Future<void> _loadSavedImage() async {
-    final imagePath = await controller.getProfileImage();
-    if (imagePath != null) {
-      setState(() {
-        _profileImage = File(imagePath);
-      });
-    }
+    lpUserController.fetchLpUsers('testUsername'); // Fetch users by username on init
   }
 
   Future<void> _pickImage() async {
@@ -39,8 +32,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         setState(() {
           _profileImage = File(image.path);
         });
-        // Save the image path
-        await controller.saveProfileImage(image.path);
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -137,6 +128,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               const SizedBox(height: 30),
+              // Displaying list of users fetched from LpUserController
+              Obx(() {
+                if (lpUserController.isLoading.value) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (lpUserController.users.isEmpty) {
+                  return const Center(child: Text('No LP Users found'));
+                }
+
+                return ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: lpUserController.users.length,
+                  itemBuilder: (context, index) {
+                    final lpUser = lpUserController.users[index];
+                    return ListTile(
+                      title: Text(lpUser.username),
+                      subtitle: Text(lpUser.email),
+                    );
+                  },
+                );
+              }),
             ],
           ),
         );

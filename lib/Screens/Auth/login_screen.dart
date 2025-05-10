@@ -33,7 +33,7 @@ class _LoginScreenState extends State<LoginScreen> {
         height: double.infinity,
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [AppColors.orangeShade.withOpacity(0.8), Colors.white],
+            colors: [AppColors.whiteTheme.withOpacity(0.8),AppColors.whiteTheme],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -67,7 +67,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               text: "Login",
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
-                              color: AppColors.orangeShade,
+                              color: AppColors.appColor,
                             ),
                             SizedBox(height: height * 0.025),
                             CustomTextField(
@@ -102,7 +102,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(15),
                                     gradient: LinearGradient(
-                                      colors: [AppColors.orangeShade, Colors.deepOrangeAccent],
+                                      colors: [AppColors.appColor, AppColors.greenColor],
                                     ),
                                   ),
                                   child: Center(
@@ -148,7 +148,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   child: Text(
                                     "Signup",
                                     style: TextStyle(
-                                      color: AppColors.orangeShade,
+                                      color: AppColors.greenColor,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),

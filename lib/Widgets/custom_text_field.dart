@@ -122,7 +122,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
             TextStyle(
               color: widget.textColor ?? Colors.black,
             ),
-        cursorColor: widget.cursorColor ?? AppColors.orangeShade,
+        cursorColor: widget.cursorColor ?? AppColors.appColor,
         enableInteractiveSelection: widget.enableInteractiveSelection,
         textCapitalization: widget.textCapitalization,
         decoration: InputDecoration(
@@ -143,7 +143,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(widget.borderRadius),
             borderSide: BorderSide(
-              color: widget.borderColor ?? AppColors.orangeShade,
+              color: widget.borderColor ?? AppColors.appColor,
               width: 1.5,
             ),
           ),

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'package:attendance/Screens/Auth/login_screen.dart';
 import 'package:attendance/Screens/Home/home_screen.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
@@ -155,7 +156,7 @@ class SignupController extends GetxController {
           }
 
           Snackbar.snackBar('LineUp', 'Registration Successful!');
-          Get.offAll(() => HomeScreen());
+          Get.offAll(() => LoginScreen());
 
           return SignUpModel.fromJson(responseData);
         } else {

@@ -7,7 +7,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../AppColors/app_colors.dart';
 import '../../Controllers/get_leaves_controller.dart';
-import '../../Controllers/get_leaves_status_controller.dart';
 import '../../Controllers/get_leaves_type_controller.dart';
 import '../../Controllers/leaves_controller.dart';
 import '../../Models/save_lp_requests.dart';
@@ -23,10 +22,20 @@ class LeaveScreen extends StatefulWidget {
 
 class _LeaveScreenState extends State<LeaveScreen> {
   String? _selectedLeaveType;
+  String? _selectedReason;
   final TextEditingController _reasonController = TextEditingController();
   final LeaveController leaveController = Get.put(LeaveController());
   final GetLeavesController getleavesController = Get.put(GetLeavesController());
   final GetLeaveTypesController leaveTypesController = Get.put(GetLeaveTypesController());
+
+  final List<String> predefinedReasons = [
+    "Sick Leave",
+    "Vacation",
+    "Personal Leave",
+    "Family Emergency",
+    "Bereavement",
+    "Other"
+  ];
 
   @override
   void initState() {
@@ -74,10 +83,12 @@ class _LeaveScreenState extends State<LeaveScreen> {
       return;
     }
 
-    if (_selectedLeaveType != null && _reasonController.text.isNotEmpty) {
+    String reason = _selectedReason == "Other" ? _reasonController.text.trim() : _selectedReason ?? "";
+
+    if (_selectedLeaveType != null && reason.isNotEmpty) {
       final leaveRequest = SaveLpLeaveRequest(
         type: _getLeaveTypeId(_selectedLeaveType!),
-        reason: _reasonController.text.trim(),
+        reason: reason,
         status: 4, // Assuming 4 is for "Pending" status
         userId: userId,
       );
@@ -94,6 +105,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
         if (success) {
           setState(() {
             _selectedLeaveType = null;
+            _selectedReason = null;
             _reasonController.clear();
           });
           await getleavesController.fetchLeaves();
@@ -101,16 +113,16 @@ class _LeaveScreenState extends State<LeaveScreen> {
           Get.snackbar(
             'Success',
             'Leave submitted successfully!',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.green,
+            snackPosition: SnackPosition.TOP,
+            backgroundColor: AppColors.appColor,
             colorText: Colors.white,
           );
         } else {
           Get.snackbar(
             'Error',
             'Failed to submit leave. Please try again.',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.red,
+            snackPosition: SnackPosition.TOP,
+            backgroundColor: AppColors.redColor,
             colorText: Colors.white,
           );
         }
@@ -119,7 +131,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
         Get.snackbar(
           'Error',
           'An error occurred: $e',
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.red,
           colorText: Colors.white,
         );
@@ -128,8 +140,8 @@ class _LeaveScreenState extends State<LeaveScreen> {
       Get.snackbar(
         'Missing Information',
         'Please select a leave type and enter a reason',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.orange,
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: AppColors.redColor,
         colorText: Colors.white,
       );
     }
@@ -161,9 +173,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
         ),
       ),
       body: RefreshIndicator(
-        onRefresh: () async {
-          await _fetchLeaveTypesAndLeaves();
-        },
+        onRefresh: _fetchLeaveTypesAndLeaves,
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -201,6 +211,8 @@ class _LeaveScreenState extends State<LeaveScreen> {
                     onChanged: (value) {
                       setState(() {
                         _selectedLeaveType = value;
+                        _selectedReason = null; // Reset reason when leave type changes
+                        _reasonController.clear();
                       });
                     },
                     underline: const SizedBox(),
@@ -209,31 +221,66 @@ class _LeaveScreenState extends State<LeaveScreen> {
               }),
               const SizedBox(height: 20),
 
-              // Reason Input
+              // Reason Dropdown
               if (_selectedLeaveType != null) ...[
                 Text(
-                  'Reason for $_selectedLeaveType:',
+                  'Select Reason:',
                   style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 10),
-                TextFormField(
-                  controller: _reasonController,
-                  decoration: InputDecoration(
-                    labelText: 'Enter your reason',
-                    filled: true,
-                    fillColor: Colors.grey[200],
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    color: Colors.grey[200],
                   ),
-                  maxLines: 3,
+                  child: DropdownButton<String>(
+                    isExpanded: true,
+                    hint: Text(
+                      'Select Reason',
+                      style: GoogleFonts.poppins(fontSize: 16),
+                    ),
+                    value: _selectedReason,
+                    items: predefinedReasons.map((reason) {
+                      return DropdownMenuItem<String>(
+                        value: reason,
+                        child: Text(reason, style: GoogleFonts.poppins()),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedReason = value;
+                        if (_selectedReason != "Other") {
+                          _reasonController.clear();
+                        }
+                      });
+                    },
+                    underline: const SizedBox(),
+                  ),
                 ),
                 const SizedBox(height: 20),
+
+                // Text Field for "Other" Reason
+                if (_selectedReason == "Other") ...[
+                  TextFormField(
+                    controller: _reasonController,
+                    decoration: InputDecoration(
+                      labelText: 'Enter your reason',
+                      filled: true,
+                      fillColor: Colors.grey[200],
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                    ),
+                    maxLines: 3,
+                  ),
+                  const SizedBox(height: 20),
+                ],
 
                 // Submit Button
                 Center(
@@ -245,7 +292,7 @@ class _LeaveScreenState extends State<LeaveScreen> {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(15),
                         gradient: LinearGradient(
-                          colors: [AppColors.orangeShade, AppColors.orangeShade],
+                          colors: [AppColors.appColor, AppColors.greenColor],
                         ),
                       ),
                       child: Center(
@@ -299,10 +346,9 @@ class _LeaveScreenState extends State<LeaveScreen> {
                 }
 
                 return ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: getleavesController.leaves.length,
-                    // In your ListView.builder section, update the itemBuilder like this:
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: getleavesController.leaves.length,
                     itemBuilder: (context, index) {
                       final leave = getleavesController.leaves[index];
                       return Card(

@@ -396,18 +396,62 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
   bool isWithinAllowedBreakTime() {
     final now = DateTime.now();
     final currentHour = now.hour;
+    final currentMinute = now.minute;
     final currentDay = now.weekday;
 
-    // Monday to Friday (7 PM to 4 AM)
+    // Monday to Friday restrictions
     if (currentDay >= DateTime.monday && currentDay <= DateTime.friday) {
-      return currentHour >= 19 || currentHour < 4;
+      // General break times (7 PM to 4 AM)
+      final isWithinGeneralBreakTime = currentHour >= 19 || currentHour < 4;
+
+      // Restricted periods (7-8 PM, 11 PM-2 AM)
+      final is7to8PM = currentHour == 19;
+      final is11PMto2AM = currentHour >= 23 || currentHour < 2;
+
+      // Meal break only allowed 12 AM to 1 AM
+      final isMealBreakTime = currentHour == 0; // 12 AM to 1 AM
+
+      // Check if current time is during a restricted period
+      if (is7to8PM || is11PMto2AM) {
+        return false;
+      }
+
+      return isWithinGeneralBreakTime;
     }
-    // Saturday (11 AM to 6 PM)
+    // Saturday restrictions
     else if (currentDay == DateTime.saturday) {
-      return currentHour >= 11 && currentHour < 18;
+      // General break times (11 AM to 6 PM)
+      final isWithinGeneralBreakTime = currentHour >= 11 && currentHour < 18;
+
+      // Restricted periods (12 AM-2 AM, 10-11 AM, 1:30-4:30 PM)
+      final is12AMto2AM = currentHour >= 0 && currentHour < 2;
+      final is10to11AM = currentHour == 10;
+      final is1_30to4_30PM = (currentHour == 13 && currentMinute >= 30) ||
+          (currentHour > 13 && currentHour < 16) ||
+          (currentHour == 16 && currentMinute < 30);
+
+      // Check if current time is during a restricted period
+      if (is12AMto2AM || is10to11AM || is1_30to4_30PM) {
+        return false;
+      }
+
+      return isWithinGeneralBreakTime;
     }
     // Sunday - no breaks allowed
     return false;
+  }
+
+  String currentBreakTimeMessage() {
+    final now = DateTime.now();
+    final currentDay = now.weekday;
+
+    if (currentDay >= DateTime.monday && currentDay <= DateTime.friday) {
+      return "Breaks allowed between 7 PM to 4 AM (except 7-8 PM, 11 PM-2 AM). Meal break only 12 AM-1 AM";
+    } else if (currentDay == DateTime.saturday) {
+      return "Breaks allowed between 11 AM to 6 PM (except 12 AM-2 AM, 10-11 AM, 1:30-4:30 PM)";
+    } else {
+      return "No breaks allowed on Sunday";
+    }
   }
 
   // Check if any break is currently active
@@ -425,11 +469,10 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
   void startBreak() {
     if (!isWithinAllowedBreakTime()) {
       Get.snackbar(
-        "Break Not Allowed",
-        currentBreakTimeMessage(),
-        backgroundColor: AppColors.redColor,
+          "Break Not Allowed",
+          currentBreakTimeMessage(),
+          backgroundColor: AppColors.redColor,
           colorText: AppColors.whiteTheme
-
       );
       return;
     }
@@ -437,10 +480,10 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
     // Check if any break is already active
     if (isAnyBreakActive()) {
       Get.snackbar(
-        "Break Already Active",
-        "Please end your current break before starting a new one",
-        backgroundColor: AppColors.redColor,
-        colorText: AppColors.whiteTheme
+          "Break Already Active",
+          "Please end your current break before starting a new one",
+          backgroundColor: AppColors.appColor,
+          colorText: AppColors.whiteTheme
       );
       return;
     }
@@ -448,11 +491,10 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
     final selectedType = getLpBreakTypesController.selectedBreakType.value;
     if (selectedType.isEmpty) {
       Get.snackbar(
-        "Error",
-        "Please select a break type first",
-        backgroundColor: AppColors.redColor,
+          "Error",
+          "Please select a break type first",
+          backgroundColor: AppColors.redColor,
           colorText: AppColors.whiteTheme
-
       );
       return;
     }
@@ -519,19 +561,6 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
         breakTypeTimers[breakType] = null;
       }
     });
-  }
-
-  String currentBreakTimeMessage() {
-    final now = DateTime.now();
-    final currentDay = now.weekday;
-
-    if (currentDay >= DateTime.monday && currentDay <= DateTime.friday) {
-      return "Breaks only allowed between 7 PM to 4 AM from Monday to Friday";
-    } else if (currentDay == DateTime.saturday) {
-      return "Breaks only allowed between 11 AM to 6 PM on Saturday";
-    } else {
-      return "No breaks allowed on Sunday";
-    }
   }
 
   void endBreak() {
@@ -601,10 +630,10 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
     // Check if any break is already active
     if (isAnyBreakActive()) {
       Get.snackbar(
-        "Break Already Active",
-        "Please end your current break before starting a new one",
-        backgroundColor: AppColors.redColor,
-        colorText: AppColors.whiteTheme
+          "Break Already Active",
+          "Please end your current break before starting a new one",
+          backgroundColor: AppColors.appColor,
+          colorText: AppColors.whiteTheme
       );
       return;
     }
@@ -691,7 +720,7 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
       Get.snackbar(
         "Quick break ended",
         "Duration: ${formatFullTime(duration)}",
-        backgroundColor: AppColors.redColor,
+        backgroundColor: AppColors.appColor,
       );
     }
   }
@@ -700,15 +729,39 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
     // Check if any break is already active
     if (isAnyBreakActive()) {
       Get.snackbar(
-        "Break Already Active",
-        "Please end your current break before starting a new one",
-        backgroundColor: AppColors.redColor,
-        colorText: AppColors.whiteTheme
+          "Break Already Active",
+          "Please end your current break before starting a new one",
+          backgroundColor: AppColors.appColor,
+          colorText: AppColors.whiteTheme
       );
       return;
     }
 
+    // Check if meal break is allowed at this time (only 12 AM to 1 AM on weekdays)
     final now = DateTime.now();
+    final currentHour = now.hour;
+    final currentDay = now.weekday;
+
+    if (currentDay >= DateTime.monday && currentDay <= DateTime.friday) {
+      if (currentHour != 0) { // 12 AM to 1 AM
+        Get.snackbar(
+            "Meal Break Not Allowed",
+            "Meal breaks are only allowed from 12 AM to 1 AM on weekdays",
+            backgroundColor: AppColors.appColor,
+            colorText: AppColors.whiteTheme
+        );
+        return;
+      }
+    } else {
+      // No meal breaks on weekends
+      Get.snackbar(
+          "Meal Break Not Allowed",
+          "Meal breaks are not allowed on weekends",
+          backgroundColor: AppColors.appColor,
+          colorText: AppColors.whiteTheme
+      );
+      return;
+    }
 
     setState(() {
       isMealBreak = true;
@@ -740,7 +793,7 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
     Get.snackbar(
       "Meal Break",
       "Meal break started",
-      backgroundColor: AppColors.orangeShade,
+      backgroundColor: AppColors.greenColor,
     );
   }
 
@@ -790,7 +843,7 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
       Get.snackbar(
         "Meal break ended",
         "Duration: ${formatFullTime(duration)}",
-        backgroundColor: AppColors.redColor,
+        backgroundColor: AppColors.appColor,
       );
     }
   }
@@ -889,6 +942,24 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
     super.dispose();
   }
 
+  Future<void> _handleRefresh() async {
+    try {
+      if (userId != null) {
+        await controller.fetchBreaks(userId!);
+        await getLpBreakTypesController.fetchLpBreakTypes();
+        _updateBreakSummaries();
+      }
+    } catch (e) {
+      log('Refresh error: $e');
+      Get.snackbar(
+        "Error",
+        "Failed to refresh data",
+        backgroundColor: AppColors.redColor,
+        colorText: AppColors.whiteTheme,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final selectedType = getLpBreakTypesController.selectedBreakType.value;
@@ -912,331 +983,336 @@ class _BreakTrackerScreenState extends State<BreakTrackerScreen> {
       body: Obx(
             () => Stack(
           children: [
-            SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Column(
-                      children: [
-                        Card(
-                          color: AppColors.appColor,
-                          elevation: 4,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+            RefreshIndicator(
+              onRefresh: _handleRefresh,
+              color: AppColors.appColor,
+              backgroundColor: AppColors.whiteTheme,
+              child: SingleChildScrollView(
+                physics: AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Column(
+                        children: [
+                          Card(
+                            color: AppColors.appColor,
+                            elevation: 4,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    "Break Summary",
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.whiteTheme,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Row(
+                                    mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      const Text(
+                                        "Today's Total:",
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: AppColors.whiteTheme,
+                                        ),
+                                      ),
+                                      Text(
+                                        formatFullTime(dailyBreakSeconds),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.whiteTheme,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      const Text(
+                                        "This Month's Total:",
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: AppColors.whiteTheme,
+                                        ),
+                                      ),
+                                      Text(
+                                        formatFullTime(monthlyBreakSeconds),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.whiteTheme,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  "Break Summary",
-                                  style: TextStyle(
-                                    fontSize: 18,
+                          const SizedBox(height: 4),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Obx(() {
+                              if (getLpBreakTypesController.isLoading.value) {
+                                return const Center(
+                                  child: CircularProgressIndicator(),
+                                );
+                              }
+
+                              if (getLpBreakTypesController.breakTypes.isEmpty) {
+                                return const Text("No break types found");
+                              }
+
+                              return DropdownButton<String>(
+                                value:
+                                getLpBreakTypesController
+                                    .selectedBreakType
+                                    .value
+                                    .isEmpty
+                                    ? null
+                                    : getLpBreakTypesController
+                                    .selectedBreakType
+                                    .value,
+                                isExpanded: true,
+                                hint: const Text("Select Break Type"),
+                                underline: const SizedBox(),
+                                items:
+                                getLpBreakTypesController.breakTypes.map((
+                                    type,
+                                    ) {
+                                  return DropdownMenuItem<String>(
+                                    value: type.name,
+                                    child: Text("${type.name}"),
+                                  );
+                                }).toList(),
+                                onChanged: (newValue) {
+                                  if (newValue != null && !isAnyBreakActive()) {
+                                    getLpBreakTypesController
+                                        .selectedBreakType
+                                        .value = newValue;
+                                  } else if (isAnyBreakActive()) {
+                                    Get.snackbar(
+                                        "Break Active",
+                                        "Cannot change break type while a break is active",
+                                        backgroundColor: AppColors.redColor,
+                                        colorText: AppColors.whiteTheme
+                                    );
+                                  }
+                                },
+                              );
+                            }),
+                          ),
+
+                          const SizedBox(height: 4),
+                          Card(
+                            elevation: 4,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Column(
+                                children: [
+                                  Row(
+                                    mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Obx(() {
+                                        final type =
+                                            getLpBreakTypesController
+                                                .selectedBreakType
+                                                .value;
+                                        return Text(
+                                          type.isEmpty
+                                              ? "Select Break Type"
+                                              : type,
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        );
+                                      }),
+                                      Obx(() {
+                                        final type =
+                                            getLpBreakTypesController
+                                                .selectedBreakType
+                                                .value;
+                                        if (type.isEmpty)
+                                          return const Text("00:00");
+
+                                        return Text(
+                                          formatTime(getActiveBreakSeconds(type)),
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                          ),
+                                        );
+                                      }),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 5),
+                                  Obx(() {
+                                    final type =
+                                        getLpBreakTypesController
+                                            .selectedBreakType
+                                            .value;
+                                    if (type.isEmpty) {
+                                      return ClipRRect(
+                                        borderRadius: BorderRadius.circular(5),
+                                        child: LinearProgressIndicator(
+                                          value: 0,
+                                          backgroundColor: Colors.grey[200],
+                                          color: AppColors.appColor,
+                                          minHeight: 10,
+                                        ),
+                                      );
+                                    }
+
+                                    final percent = getActiveBreakPercent(type);
+                                    final isOvertime =
+                                        (type == 'Quick Break' &&
+                                            getActiveBreakSeconds(type) > 600) ||
+                                            (type == 'Meal Break' &&
+                                                getActiveBreakSeconds(type) > 3600);
+
+                                    return ClipRRect(
+                                      borderRadius: BorderRadius.circular(5),
+                                      child: LinearProgressIndicator(
+                                        value: percent,
+                                        backgroundColor: Colors.grey[200],
+                                        color:
+                                        isOvertime
+                                            ? Colors.red
+                                            : AppColors.appColor,
+                                        minHeight: 10,
+                                      ),
+                                    );
+                                  }),
+                                  const SizedBox(height: 5),
+                                  Obx(() {
+                                    final selectedType =
+                                        getLpBreakTypesController
+                                            .selectedBreakType
+                                            .value;
+                                    final isActive =
+                                        selectedType.isNotEmpty &&
+                                            isBreakActiveByType(selectedType);
+
+                                    return SizedBox(
+                                      width: double.infinity,
+                                      child: ElevatedButton(
+                                        onPressed:
+                                        selectedType.isEmpty
+                                            ? null
+                                            : (isActive
+                                            ? endBreak
+                                            : startBreak),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor:
+                                          isActive
+                                              ? AppColors.redColor
+                                              : AppColors.appColor,
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 12,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                          ),
+                                        ),
+                                        child: Text(
+                                          isActive ? "STOP BREAK" : "START BREAK",
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Text(
+                        "Break History",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.appColor,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+
+                    // THIS IS THE FIXED PART - Setting a fixed height for the ListView
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      height: 300, // Fixed height for the ListView
+                      child: Obx(() {
+                        if (controller.isLoading.value) {
+                          return const Center(child: CircularProgressIndicator());
+                        }
+
+                        if (controller.breaksList.isEmpty) {
+                          return const Center(child: Text("No break records yet"));
+                        }
+
+                        return ListView.builder(
+                          shrinkWrap: true, // Make the ListView adapt to its content
+                          physics: const AlwaysScrollableScrollPhysics(), // Allow scrolling
+                          itemCount: controller.breaksList.length,
+                          itemBuilder: (context, index) {
+                            final record = controller.breaksList[index];
+
+                            return Card(
+                              margin: const EdgeInsets.only(bottom: 8.0),
+                              color: AppColors.appColor,
+                              child: ListTile(
+                                title: Text(
+                                  "${record.type}",
+                                  style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     color: AppColors.whiteTheme,
                                   ),
                                 ),
-                                const SizedBox(height: 12),
-                                Row(
-                                  mainAxisAlignment:
-                                  MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    const Text(
-                                      "Today's Total:",
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        color: AppColors.whiteTheme,
-                                      ),
-                                    ),
-                                    Text(
-                                      formatFullTime(dailyBreakSeconds),
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.whiteTheme,
-                                      ),
-                                    ),
-                                  ],
+                                subtitle: Text(
+                                  "Start: ${record.startDate}\nEnd: ${record.endDate ?? 'In progress'}",
+                                  style: const TextStyle(color: AppColors.whiteTheme),
                                 ),
-                                const SizedBox(height: 8),
-                                Row(
-                                  mainAxisAlignment:
-                                  MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    const Text(
-                                      "This Month's Total:",
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        color: AppColors.whiteTheme,
-                                      ),
-                                    ),
-                                    Text(
-                                      formatFullTime(monthlyBreakSeconds),
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.whiteTheme,
-                                      ),
-                                    ),
-                                  ],
+                                trailing: Text(
+                                  _calculateDuration(record.startDate, record.endDate),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.whiteTheme,
+                                  ),
                                 ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Obx(() {
-                            if (getLpBreakTypesController.isLoading.value) {
-                              return const Center(
-                                child: CircularProgressIndicator(),
-                              );
-                            }
-
-                            if (getLpBreakTypesController.breakTypes.isEmpty) {
-                              return const Text("No break types found");
-                            }
-
-                            return DropdownButton<String>(
-                              value:
-                              getLpBreakTypesController
-                                  .selectedBreakType
-                                  .value
-                                  .isEmpty
-                                  ? null
-                                  : getLpBreakTypesController
-                                  .selectedBreakType
-                                  .value,
-                              isExpanded: true,
-                              hint: const Text("Select Break Type"),
-                              underline: const SizedBox(),
-                              items:
-                              getLpBreakTypesController.breakTypes.map((
-                                  type,
-                                  ) {
-                                return DropdownMenuItem<String>(
-                                  value: type.name,
-                                  child: Text("${type.name}"),
-                                );
-                              }).toList(),
-                              onChanged: (newValue) {
-                                if (newValue != null && !isAnyBreakActive()) {
-                                  getLpBreakTypesController
-                                      .selectedBreakType
-                                      .value = newValue;
-                                } else if (isAnyBreakActive()) {
-                                  Get.snackbar(
-                                    "Break Active",
-                                    "Cannot change break type while a break is active",
-                                    backgroundColor: AppColors.redColor,
-                                      colorText: AppColors.whiteTheme
-
-                                  );
-                                }
-                              },
+                              ),
                             );
-                          }),
-                        ),
-
-                        const SizedBox(height: 4),
-                        Card(
-                          elevation: 4,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                  MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Obx(() {
-                                      final type =
-                                          getLpBreakTypesController
-                                              .selectedBreakType
-                                              .value;
-                                      return Text(
-                                        type.isEmpty
-                                            ? "Select Break Type"
-                                            : type,
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      );
-                                    }),
-                                    Obx(() {
-                                      final type =
-                                          getLpBreakTypesController
-                                              .selectedBreakType
-                                              .value;
-                                      if (type.isEmpty)
-                                        return const Text("00:00");
-
-                                      return Text(
-                                        formatTime(getActiveBreakSeconds(type)),
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16,
-                                        ),
-                                      );
-                                    }),
-                                  ],
-                                ),
-                                const SizedBox(height: 5),
-                                Obx(() {
-                                  final type =
-                                      getLpBreakTypesController
-                                          .selectedBreakType
-                                          .value;
-                                  if (type.isEmpty) {
-                                    return ClipRRect(
-                                      borderRadius: BorderRadius.circular(5),
-                                      child: LinearProgressIndicator(
-                                        value: 0,
-                                        backgroundColor: Colors.grey[200],
-                                        color: AppColors.appColor,
-                                        minHeight: 10,
-                                      ),
-                                    );
-                                  }
-
-                                  final percent = getActiveBreakPercent(type);
-                                  final isOvertime =
-                                      (type == 'Quick Break' &&
-                                          getActiveBreakSeconds(type) > 600) ||
-                                          (type == 'Meal Break' &&
-                                              getActiveBreakSeconds(type) > 3600);
-
-                                  return ClipRRect(
-                                    borderRadius: BorderRadius.circular(5),
-                                    child: LinearProgressIndicator(
-                                      value: percent,
-                                      backgroundColor: Colors.grey[200],
-                                      color:
-                                      isOvertime
-                                          ? Colors.red
-                                          : AppColors.appColor,
-                                      minHeight: 10,
-                                    ),
-                                  );
-                                }),
-                                const SizedBox(height: 5),
-                                Obx(() {
-                                  final selectedType =
-                                      getLpBreakTypesController
-                                          .selectedBreakType
-                                          .value;
-                                  final isActive =
-                                      selectedType.isNotEmpty &&
-                                          isBreakActiveByType(selectedType);
-
-                                  return SizedBox(
-                                    width: double.infinity,
-                                    child: ElevatedButton(
-                                      onPressed:
-                                      selectedType.isEmpty
-                                          ? null
-                                          : (isActive
-                                          ? endBreak
-                                          : startBreak),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor:
-                                        isActive
-                                            ? AppColors.redColor
-                                            : AppColors.appColor,
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 12,
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            8,
-                                          ),
-                                        ),
-                                      ),
-                                      child: Text(
-                                        isActive ? "STOP BREAK" : "START BREAK",
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                }),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
+                          },
+                        );
+                      }),
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Text(
-                      "Break History",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.appColor,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-
-                  // THIS IS THE FIXED PART - Setting a fixed height for the ListView
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    height: 300, // Fixed height for the ListView
-                    child: Obx(() {
-                      if (controller.isLoading.value) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-
-                      if (controller.breaksList.isEmpty) {
-                        return const Center(child: Text("No break records yet"));
-                      }
-
-                      return ListView.builder(
-                        shrinkWrap: true, // Make the ListView adapt to its content
-                        physics: const AlwaysScrollableScrollPhysics(), // Allow scrolling
-                        itemCount: controller.breaksList.length,
-                        itemBuilder: (context, index) {
-                          final record = controller.breaksList[index];
-
-                          return Card(
-                            margin: const EdgeInsets.only(bottom: 8.0),
-                            color: AppColors.appColor,
-                            child: ListTile(
-                              title: Text(
-                                "${record.type}",
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.whiteTheme,
-                                ),
-                              ),
-                              subtitle: Text(
-                                "Start: ${record.startDate}\nEnd: ${record.endDate ?? 'In progress'}",
-                                style: const TextStyle(color: AppColors.whiteTheme),
-                              ),
-                              trailing: Text(
-                                _calculateDuration(record.startDate, record.endDate),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.whiteTheme,
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      );
-                    }),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
             // Loading overlay

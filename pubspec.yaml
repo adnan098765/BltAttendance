@@ -48,6 +48,9 @@ dependencies:
   table_calendar: ^3.2.0
   fl_chart: ^0.70.2
   shimmer: ^3.0.0
+  simple_animations: ^5.2.0
+  particles_flutter: ^1.0.1
+  flutter_animate: ^4.5.2
 #  intl: ^0.20.1
 #  cupertino_icons: ^1.0.2
   provider: ^6.1.1

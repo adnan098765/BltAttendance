@@ -1,76 +1,43 @@
-// lib/Models/user_model.dart
 class UserModel {
   final String fullName;
   final String fatherName;
-  final String gender;
   final String phoneNumber;
-  final String cnic;
   final String email;
-  final String address;
   final String userName;
+  final String cnic;
+  final String address;
+  final String gender;
   final String registrationDate;
-  final String status;
-  final String role;
 
   UserModel({
     required this.fullName,
     required this.fatherName,
-    required this.gender,
     required this.phoneNumber,
-    required this.cnic,
     required this.email,
-    required this.address,
     required this.userName,
+    required this.cnic,
+    required this.address,
+    required this.gender,
     required this.registrationDate,
-    required this.status,
-    required this.role,
   });
 
-  // Convert to JSON
-  Map<String, dynamic> toJson() {
-    return {
-      'fullName': fullName,
-      'fatherName': fatherName,
-      'gender': gender,
-      'phoneNumber': phoneNumber,
-      'cnic': cnic,
-      'email': email,
-      'address': address,
-      'userName': userName,
-      'registrationDate': registrationDate,
-      'status': status,
-      'role': role,
-    };
-  }
-
-  // Create from JSON
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      fullName: json['fullName'] ?? '',
-      fatherName: json['fatherName'] ?? '',
-      gender: json['gender'] ?? '',
-      phoneNumber: json['phoneNumber'] ?? '',
-      cnic: json['cnic'] ?? '',
-      email: json['email'] ?? '',
-      address: json['address'] ?? '',
-      userName: json['userName'] ?? '',
-      registrationDate: json['registrationDate'] ?? '',
-      status: json['status'] ?? '',
-      role: json['role'] ?? '',
+      fullName: json['Name'] ?? '',
+      fatherName: json['FatherName'] ?? '',
+      phoneNumber: json['Mobile'] ?? '',
+      email: json['Email'] ?? '',
+      userName: json['UserName'] ?? '',
+      cnic: json['CNIC'] ?? '',
+      address: json['Address'] ?? '',
+      gender: json['Gender'] ?? 'Male',
+      registrationDate: json['RegDate'] ?? '',
     );
   }
 
-  // Method to get display gender
   String getDisplayGender() {
-    switch (gender) {
-      case 'M':
-        return 'Male';
-      case 'F':
-        return 'Female';
-      case 'O':
-        return 'Other';
-      default:
-        return gender;
-    }
+    return gender == '1' ? 'Male' : gender == '2' ? 'Female' : 'Other';
   }
 }
+
+  // Method to get display gender
