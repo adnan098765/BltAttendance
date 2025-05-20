@@ -26,6 +26,7 @@ class ProfileController extends GetxController {
         user.value = UserModel.fromJson(jsonDecode(userData));
       }
     } finally {
+      isLoading.value= false;
       isLoading(false);
     }
   }

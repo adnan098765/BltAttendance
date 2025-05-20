@@ -20,7 +20,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController passwordController = TextEditingController();
   final LoginController loginController = Get.put(LoginController());
 
-  bool _buttonPressed = false;
+  final bool _buttonPressed = false;
 
   @override
   Widget build(BuildContext context) {
@@ -91,7 +91,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   if (!loginController.isLoading.value) {
                                     loginController.loginUser(
                                       userController.text.trim(),
-                                      // passwordController.text.trim(),
+                                      passwordController.text.trim(),
                                     );
                                   }
                                 },
